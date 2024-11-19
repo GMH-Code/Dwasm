@@ -1976,8 +1976,9 @@ bottomtexture:
       else
       if (temptex)
       {
+        fixed_t rowoffset;
         wall.gltexture=temptex;
-        fixed_t rowoffset = seg->sidedef->rowoffset;
+        rowoffset = seg->sidedef->rowoffset;
         if (fix_sky_bleed)
         {
             ceiling_height = MIN(frontsector->ceilingheight, backsector->ceilingheight);

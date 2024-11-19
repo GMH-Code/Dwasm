@@ -68,7 +68,11 @@
 **
 */
 
+#ifdef __EMSCRIPTEN__
+#include <GL/gl.h>
+#else
 #include <SDL_opengl.h>
+#endif // __EMSCRIPTEN__
 #include <math.h>
 #include "v_video.h"
 #include "gl_intern.h"

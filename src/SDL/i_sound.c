@@ -233,6 +233,11 @@ static int getSliceSize(void)
 
   limit = snd_samplerate / TICRATE;
 
+#ifdef __EMSCRIPTEN__
+  // Help prevent buffer underrun crackles in WASM without too much sound lag
+  limit <<= 2;
+#endif
+
   // Try all powers of two, not exceeding the limit.
 
   for (n=0;; ++n)

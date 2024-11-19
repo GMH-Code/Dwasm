@@ -730,10 +730,18 @@ GLuint gld_LoadDetailName(const char *name)
         glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
         glBindTexture(GL_TEXTURE_2D, texid);
 
+#ifdef __EMSCRIPTEN__
+        glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, GL_TRUE);
+        glTexImage2D(GL_TEXTURE_2D, 0, gl_tex_format,
+          surf->w, surf->h, 0,
+          imageformats[surf->format->BytesPerPixel],
+          GL_UNSIGNED_BYTE, surf->pixels);
+#else
         gluBuild2DMipmaps(GL_TEXTURE_2D, gl_tex_format,
           surf->w, surf->h, 
           imageformats[surf->format->BytesPerPixel], 
           GL_UNSIGNED_BYTE, surf->pixels);
+#endif // __EMSCRIPTEN__
 
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);	

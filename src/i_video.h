@@ -39,8 +39,12 @@
 #endif
 
 #ifdef GL_DOOM
+#ifdef __EMSCRIPTEN__
+#include <GL/gl.h>
+#else
 #include <SDL_opengl.h>
-#endif
+#endif // __EMSCRIPTEN__
+#endif // GL_DOOM
 
 #include "doomtype.h"
 #include "v_video.h"

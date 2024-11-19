@@ -1637,32 +1637,32 @@ static dboolean PIT_VileCheck(mobj_t *thing)
 //        if ((thing->height == 0) && (thing->radius == 0))         //   |
 //            return true;                                          // phares
 
-    corpsehit = thing;
-    corpsehit->momx = corpsehit->momy = 0;
-    if (comp[comp_vile])                                            // phares
-      {                                                             //   |
-        corpsehit->height <<= 2;                                    //   V
-        check = P_CheckPosition(corpsehit,corpsehit->x,corpsehit->y);
-        corpsehit->height >>= 2;
-      }
-    else
-      {
-        int height,radius;
+  corpsehit = thing;
+  corpsehit->momx = corpsehit->momy = 0;
+  if (comp[comp_vile])                                            // phares
+    {                                                             //   |
+      corpsehit->height <<= 2;                                    //   V
+      check = P_CheckPosition(corpsehit,corpsehit->x,corpsehit->y);
+      corpsehit->height >>= 2;
+    }
+  else
+    {
+      int height,radius;
 
-        height = corpsehit->height; // save temporarily
-        radius = corpsehit->radius; // save temporarily
-        corpsehit->height = corpsehit->info->height;
-        corpsehit->radius = corpsehit->info->radius;
-        corpsehit->flags |= MF_SOLID;
-        check = P_CheckPosition(corpsehit,corpsehit->x,corpsehit->y);
-        corpsehit->height = height; // restore
-        corpsehit->radius = radius; // restore                      //   ^
-        corpsehit->flags &= ~MF_SOLID;
-      }                                                             //   |
-                                                                    // phares
-    if (!check)
-      return true;              // doesn't fit here
-    return false;               // got one, so stop checking
+      height = corpsehit->height; // save temporarily
+      radius = corpsehit->radius; // save temporarily
+      corpsehit->height = corpsehit->info->height;
+      corpsehit->radius = corpsehit->info->radius;
+      corpsehit->flags |= MF_SOLID;
+      check = P_CheckPosition(corpsehit,corpsehit->x,corpsehit->y);
+      corpsehit->height = height; // restore
+      corpsehit->radius = radius; // restore                      //   ^
+      corpsehit->flags &= ~MF_SOLID;
+    }                                                             //   |
+                                                                  // phares
+  if (!check)
+    return true;              // doesn't fit here
+  return false;               // got one, so stop checking
 }
 
 //

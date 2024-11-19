@@ -77,6 +77,10 @@ typedef BOOL (WINAPI *SetAffinityFunc)(HANDLE hProcess, DWORD mask);
 
 #include "e6y.h"
 
+#ifdef __EMSCRIPTEN__
+#include <emscripten.h>
+#endif // __EMSCRIPTEN__
+
 /* Most of the following has been rewritten by Lee Killough
  *
  * I_GetTime
@@ -451,6 +455,10 @@ void I_SafeExit(int rc)
     }
   }
 
+#ifdef __EMSCRIPTEN__
+  emscripten_cancel_main_loop();
+#endif // __EMSCRIPTEN__
+
   exit(rc);
 }
 
@@ -661,6 +669,9 @@ int main(int argc, char **argv)
   /* cphipps - call to video specific startup code */
   I_PreInitGraphics();
 
+  // Only returns in WASM
   D_DoomMain ();
+
+  // If running in WASM, return control to the browser
   return 0;
 }

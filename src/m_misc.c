@@ -471,8 +471,10 @@ default_t defaults[] =
    def_bool,ss_none},
   {"exclusive_fullscreen",{&exclusive_fullscreen},{0},0,1, // [FG] mode-changing fullscreen
   def_bool,ss_none},
+#ifndef __EMSCRIPTEN__
   {"render_vsync",{&render_vsync},{1},0,1,
    def_bool,ss_none},
+#endif // !__EMSCRIPTEN__
   {"translucency",{&default_translucency},{1},0,1,   // phares
    def_bool,ss_none}, // enables translucency
   {"tran_filter_pct",{&tran_filter_pct},{66},0,100,         // killough 2/21/98
@@ -1077,8 +1079,10 @@ default_t defaults[] =
    def_bool,ss_stat},
   {"palette_onpowers", {&palette_onpowers},  {1},0,1,
    def_bool,ss_stat},
+#ifndef __EMSCRIPTEN__
   {"render_wipescreen", {&render_wipescreen},  {1},0,1,
    def_bool,ss_stat},
+#endif
   {"render_screen_multiply", {&render_screen_multiply},  {1},1,5,
    def_int,ss_stat},
   {"integer_scaling", {&integer_scaling},  {0},0,1,

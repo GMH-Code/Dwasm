@@ -34,7 +34,11 @@
 #ifndef _GL_STRUCT_H
 #define _GL_STRUCT_H
 
+#ifdef __EMSCRIPTEN__
+#include <GL/gl.h>
+#else
 #include <SDL_opengl.h>
+#endif // __EMSCRIPTEN__
 
 extern int nodesVersion;
 

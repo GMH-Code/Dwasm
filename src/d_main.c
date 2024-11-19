@@ -101,6 +101,10 @@
 
 #include "m_io.h"
 
+#ifdef __EMSCRIPTEN__
+#include <emscripten.h>
+#endif // __EMSCRIPTEN__
+
 void GetFirstMap(int *ep, int *map); // Ty 08/29/98 - add "-warp x" functionality
 static void D_PageDrawer(void);
 
@@ -448,23 +452,20 @@ static int auto_shot_count, auto_shot_time;
 static const char *auto_shot_fname;
 
 //
-//  D_DoomLoop()
+//  D_DoomLoop() and D_DoomLoopIter()
 //
-// Not a globally visible function,
-//  just included for source reference,
-//  called by D_DoomMain, never exits.
+// Not globally visible functions,
+//  just included for source reference.
+//  D_DoomLoop() is called by D_DoomMain.
+//  D_DoomLoopIter() is called repeatedly.
+//  Only exits in WebAssembly.
 // Manages timing and IO,
 //  calls all ?_Responder, ?_Ticker, and ?_Drawer,
 //  calls I_GetTime, I_StartFrame, and I_StartTic
 //
 
-static void D_DoomLoop(void)
+static void D_LoopLoopIter(void)
 {
-  if (quickstart_window_ms > 0)
-    I_uSleep(quickstart_window_ms * 1000);
-
-  for (;;)
-    {
       WasRenderedInTryRunTics = false;
       // frame syncronous IO operations
       I_StartFrame ();
@@ -535,6 +536,20 @@ static void D_DoomLoop(void)
         free(avi_shot_curr_fname);
       }
 }
+
+static void D_DoomLoop(void)
+{
+  if (quickstart_window_ms > 0)
+    I_uSleep(quickstart_window_ms * 1000);
+
+#ifdef __EMSCRIPTEN__
+  emscripten_set_main_loop(D_LoopLoopIter, 0, 0);
+#else
+  for (;;)
+    {
+      D_LoopLoopIter();
+    }
+#endif // __EMSCRIPTEN__
 }
 
 //
@@ -1447,7 +1462,7 @@ const char *BaseName(const char *filename)
 {
   char *basename;
 
-  basename = filename + strlen(filename) - 1;
+  basename = (char *)(filename + strlen(filename) - 1);
 
   while (basename > filename && *basename != '/' && *basename != '\\')
     basename--;
@@ -2269,7 +2284,7 @@ void D_DoomMain(void)
 {
   D_DoomMainSetup(); // CPhipps - setup out of main execution stack
 
-  D_DoomLoop ();  // never returns
+  D_DoomLoop ();  // Only returns in Emscripten
 }
 
 //

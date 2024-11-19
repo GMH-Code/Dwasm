@@ -4,6 +4,13 @@ project("PrBoom-Plus"
     VERSION 2.6.66
     HOMEPAGE_URL "https://github.com/coelckers/prboom-plus")
 
+# The EMSCRIPTEN conditional is available after project configuration
+if(EMSCRIPTEN)
+    set(PROJECT_NAME "Dwasm")
+    set(PROJECT_VERSION 1.0.0)
+    set(PROJECT_HOMEPAGE_URL "https://github.com/GMH-Code/Dwasm")
+endif()
+
 # Set a default build type if none was specified
 set(default_build_type "RelWithDebInfo")
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
@@ -19,8 +26,10 @@ set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
 include(TargetArch)
 
-include(TestBigEndian)
-TEST_BIG_ENDIAN(WORDS_BIGENDIAN)
+if(NOT EMSCRIPTEN)
+    include(TestBigEndian)
+    TEST_BIG_ENDIAN(WORDS_BIGENDIAN)
+endif()
 
 # Check if a CMAKE_INSTALL_DOCDIR is provided before GNUInstallDirs sets its
 # own default; this lets us set our own PrBoom-Plus default docdir later
@@ -83,97 +92,109 @@ check_include_file("dirent.h" HAVE_DIRENT_H)
 option(BUILD_GL "Enable OpenGL rendering code" ON)
 if(BUILD_GL)
     set(OpenGL_GL_PREFERENCE LEGACY)
-    find_package(OpenGL)
-endif()
-
-find_package(SDL2 2.0.7 REQUIRED)
-
-option(WITH_IMAGE "Use SDL2_image if available" ON)
-if(WITH_IMAGE)
-    find_package(SDL2_image)
-    if(SDL2_IMAGE_FOUND)
-        set(HAVE_LIBSDL2_IMAGE TRUE)
+    if(EMSCRIPTEN)
+        if (GL4ES_PATH)
+            set(OPENGL_FOUND TRUE)
+            set(OPENGL_GLU_FOUND TRUE)
+        endif()
+    else()
+        find_package(OpenGL)
     endif()
 endif()
 
-option(WITH_MIXER "Use SDL2_mixer if available" ON)
-if(WITH_MIXER)
-    find_package(SDL2_mixer)
-    if(SDL2_MIXER_FOUND)
-        set(HAVE_LIBSDL2_MIXER TRUE)
-    endif()
-endif()
+if(EMSCRIPTEN)
+    set(SDL2_MIXER_FOUND TRUE)
+    set(HAVE_LIBSDL2_MIXER TRUE)
+else()
+    find_package(SDL2 2.0.7 REQUIRED)
 
-option(WITH_NET "Use SDL2_net if available" ON)
-if(WITH_NET)
-    find_package(SDL2_net)
-    if(SDL2_NET_FOUND)
-        set(HAVE_NET TRUE)
-        set(USE_SDL_NET TRUE)
+    option(WITH_IMAGE "Use SDL2_image if available" ON)
+    if(WITH_IMAGE)
+        find_package(SDL2_image)
+        if(SDL2_IMAGE_FOUND)
+            set(HAVE_LIBSDL2_IMAGE TRUE)
+        endif()
     endif()
-endif()
 
-option(WITH_PCRE "Use PCRE if available" ON)
-if(WITH_PCRE)
-    find_package(PCREPOSIX)
-    if(PCREPOSIX_FOUND)
-        set(HAVE_LIBPCREPOSIX TRUE)
+    option(WITH_MIXER "Use SDL2_mixer if available" ON)
+    if(WITH_MIXER)
+        find_package(SDL2_mixer)
+        if(SDL2_MIXER_FOUND)
+            set(HAVE_LIBSDL2_MIXER TRUE)
+        endif()
     endif()
-endif()
 
-option(WITH_ZLIB "Use ZLIB if available" ON)
-if(WITH_ZLIB)
-    find_package(ZLIB)
-    if(ZLIB_FOUND)
-        set(HAVE_LIBZ TRUE)
+    option(WITH_NET "Use SDL2_net if available" ON)
+    if(WITH_NET)
+        find_package(SDL2_net)
+        if(SDL2_NET_FOUND)
+            set(HAVE_NET TRUE)
+            set(USE_SDL_NET TRUE)
+        endif()
     endif()
-endif()
 
-option(WITH_MAD "Use libmad if available" ON)
-if(WITH_MAD)
-    find_package(LibMad)
-    if(LIBMAD_FOUND)
-        set(HAVE_LIBMAD TRUE)
+    option(WITH_PCRE "Use PCRE if available" ON)
+    if(WITH_PCRE)
+        find_package(PCREPOSIX)
+        if(PCREPOSIX_FOUND)
+            set(HAVE_LIBPCREPOSIX TRUE)
+        endif()
     endif()
-endif()
 
-option(WITH_FLUIDSYNTH "Use FluidSynth if available" ON)
-if(WITH_FLUIDSYNTH)
-    find_package(FluidSynth)
-    if(FLUIDSYNTH_FOUND)
-        set(HAVE_LIBFLUIDSYNTH TRUE)
+    option(WITH_ZLIB "Use ZLIB if available" ON)
+    if(WITH_ZLIB)
+        find_package(ZLIB)
+        if(ZLIB_FOUND)
+            set(HAVE_LIBZ TRUE)
+        endif()
     endif()
-endif()
 
-option(WITH_DUMB "Use DUMB if available" ON)
-if(WITH_DUMB)
-    find_package(DUMB)
-    if(DUMB_FOUND)
-        set(HAVE_LIBDUMB TRUE)
+    option(WITH_MAD "Use libmad if available" ON)
+    if(WITH_MAD)
+        find_package(LibMad)
+        if(LIBMAD_FOUND)
+            set(HAVE_LIBMAD TRUE)
+        endif()
     endif()
-endif()
 
-option(WITH_VORBISFILE "Use vorbisfile if available" ON)
-if(WITH_VORBISFILE)
-    find_package(Vorbis)
-    if(VORBIS_FOUND)
-        set(HAVE_LIBVORBISFILE TRUE)
+    option(WITH_FLUIDSYNTH "Use FluidSynth if available" ON)
+    if(WITH_FLUIDSYNTH)
+        find_package(FluidSynth)
+        if(FLUIDSYNTH_FOUND)
+            set(HAVE_LIBFLUIDSYNTH TRUE)
+        endif()
     endif()
-endif()
 
-option(WITH_PORTMIDI "Use PortMidi if available" ON)
-if(WITH_PORTMIDI)
-    find_package(PortMidi)
-    if(PortMidi_FOUND)
-        set(HAVE_LIBPORTMIDI TRUE)
+    option(WITH_DUMB "Use DUMB if available" ON)
+    if(WITH_DUMB)
+        find_package(DUMB)
+        if(DUMB_FOUND)
+            set(HAVE_LIBDUMB TRUE)
+        endif()
     endif()
-endif()
 
-option(WITH_ALSA "Use ALSA MIDI if available" ON)
-if(WITH_ALSA)
-    find_package(ALSA)
-    if(ALSA_FOUND)
-        set(HAVE_ALSA TRUE)
+    option(WITH_VORBISFILE "Use vorbisfile if available" ON)
+    if(WITH_VORBISFILE)
+        find_package(Vorbis)
+        if(VORBIS_FOUND)
+            set(HAVE_LIBVORBISFILE TRUE)
+        endif()
+    endif()
+
+    option(WITH_PORTMIDI "Use PortMidi if available" ON)
+    if(WITH_PORTMIDI)
+        find_package(PortMidi)
+        if(PortMidi_FOUND)
+            set(HAVE_LIBPORTMIDI TRUE)
+        endif()
+    endif()
+
+    option(WITH_ALSA "Use ALSA MIDI if available" ON)
+    if(WITH_ALSA)
+        find_package(ALSA)
+        if(ALSA_FOUND)
+            set(HAVE_ALSA TRUE)
+        endif()
     endif()
 endif()
 
@@ -181,7 +202,13 @@ set(CMAKE_REQUIRED_INCLUDES_PREV ${CMAKE_REQUIRED_INCLUDES})
 set(CMAKE_REQUIRED_LIBRARIES_PREV ${CMAKE_REQUIRED_LIBRARIES})
 set(CMAKE_REQUIRED_INCLUDES ${CMAKE_REQUIRED_INCLUDES} ${SDL2_INCLUDE_DIRS})
 set(CMAKE_REQUIRED_LIBRARIES ${CMAKE_REQUIRED_LIBRARIES} ${SDL2_LIBRARIES})
-check_symbol_exists(SDL_JoystickGetAxis "SDL.h" HAVE_SDL_JOYSTICKGETAXIS)
+
+if(EMSCRIPTEN)
+    set(HAVE_SDL_JOYSTICKGETAXIS TRUE)
+else()
+    check_symbol_exists(SDL_JoystickGetAxis "SDL.h" HAVE_SDL_JOYSTICKGETAXIS)
+endif()
+
 set(CMAKE_REQUIRED_INCLUDES ${CMAKE_REQUIRED_INCLUDES_PREV})
 set(CMAKE_REQUIRED_LIBRARIES ${CMAKE_REQUIRED_LIBRARIES_PREV})
 
@@ -205,19 +232,69 @@ add_definitions(-DHAVE_CONFIG_H)
 if (MSVC)
     add_definitions("/D_CRT_SECURE_NO_WARNINGS")
 else()
+    if(EMSCRIPTEN)
+        if (BUILD_GL AND GL4ES_PATH)
+            set(CMAKE_C_FLAGS
+                "${CMAKE_C_FLAGS} \
+                -I${GL4ES_PATH}/include"
+            )
+            set(CMAKE_EXE_LINKER_FLAGS
+                "${CMAKE_EXE_LINKER_FLAGS} \
+                ${GL4ES_PATH}/lib/libGL.a"
+            )
+        endif()
+
+        set(SHARED_EMSCRIPTEN_FLAGS
+            "-sUSE_SDL=2 \
+            -sUSE_SDL_MIXER=2 \
+            -sSDL2_MIXER_FORMATS='[\"wav\", \"mid\"]'"
+        )
+        set(CMAKE_C_FLAGS
+            "${CMAKE_C_FLAGS} \
+            ${SHARED_EMSCRIPTEN_FLAGS} \
+            -Wno-deprecated-non-prototype \
+            -Wno-incompatible-function-pointer-types \
+            -Wno-implicit-function-declaration"
+        )
+        set(CMAKE_CXX_FLAGS
+            "${CMAKE_CXX_FLAGS} \
+            -Wall -Wno-unknown-pragmas -Wno-unused-function -ffast-math"
+        )
+        # -sEMULATE_FUNCTION_POINTER_CASTS=1 is slow, but is necessary for
+        # debugging (cheat codes)
+        set(CMAKE_EXE_LINKER_FLAGS
+            "${CMAKE_EXE_LINKER_FLAGS} \
+            ${SHARED_EMSCRIPTEN_FLAGS} \
+            -sEMULATE_FUNCTION_POINTER_CASTS=1 \
+            -sFULL_ES2=1 \
+            -sINITIAL_MEMORY=64MB \
+            -sTOTAL_STACK=2MB \
+            -sALLOW_MEMORY_GROWTH \
+            --preload-file=../../wasm/fs/@/"
+        )
+        set(CMAKE_EXECUTABLE_SUFFIX ".html")
+        set(CMAKE_CROSSCOMPILING "")
+    else()
+        set(CMAKE_C_FLAGS
+            "${CMAKE_C_FLAGS} \
+            -Wcast-align -Wcast-qual"
+        )
+
+        # Support cross compiling
+        option(FORCE_CROSSCOMPILE "Enable cross-compilation" OFF)
+        if(FORCE_CROSSCOMPILE)
+            set(CMAKE_CROSSCOMPILING ON)
+        endif()
+    endif()
+
     set(CMAKE_C_FLAGS
         "${CMAKE_C_FLAGS} \
         -Wall -Wno-missing-field-initializers -Wwrite-strings -Wundef \
-        -Wbad-function-cast -Wcast-align -Wcast-qual -Wdeclaration-after-statement \
-        -Wpointer-arith -Wno-unused -Wno-switch -Wno-sign-compare -Wno-pointer-sign \
+        -Wbad-function-cast -Wdeclaration-after-statement -Wpointer-arith \
+        -Wno-unused -Wno-switch -Wno-sign-compare -Wno-pointer-sign \
         -ffast-math"
     )
-endif()
 
-# Support cross compiling
-option(FORCE_CROSSCOMPILE "Enable cross-compilation" OFF)
-if(FORCE_CROSSCOMPILE)
-    set(CMAKE_CROSSCOMPILING ON)
 endif()
 
 if(CMAKE_CROSSCOMPILING)
@@ -234,8 +311,11 @@ set(PRBOOM_OUTPUT_PATH ${CMAKE_BINARY_DIR})
 set(WAD_DATA prboom-plus.wad)
 set(WAD_DATA_PATH "${PRBOOM_OUTPUT_PATH}/${WAD_DATA}")
 
-add_subdirectory(data)
-add_subdirectory(doc)
+if(NOT EMSCRIPTEN)
+    add_subdirectory(data)
+    add_subdirectory(doc)
+endif()
+
 add_subdirectory(src)
 
 if(NOT CMAKE_CROSSCOMPILING)

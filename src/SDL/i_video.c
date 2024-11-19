@@ -84,7 +84,10 @@
 
 #ifdef GL_DOOM
 #include "gl_struct.h"
-#endif
+#ifdef __EMSCRIPTEN__
+#include <gl4esinit.h>
+#endif // __EMSCRIPTEN__
+#endif // GL_DOOM
 
 #include "e6y.h"//e6y
 #include "i_main.h"
@@ -114,7 +117,11 @@ extern void M_QuitDOOM(int choice);
 int use_fullscreen;
 int desired_fullscreen;
 int exclusive_fullscreen;
+#ifdef __EMSCRIPTEN__
+int render_vsync = 1;
+#else
 int render_vsync;
+#endif // __EMSCRIPTEN__
 int render_screen_multiply;
 int integer_scaling;
 int vanilla_keymap;
@@ -675,6 +682,10 @@ void I_PreInitGraphics(void)
   {
     I_Error("Could not initialize SDL [%s]", SDL_GetError());
   }
+
+#if defined(__EMSCRIPTEN__) && defined(GL_DOOM)
+  initialize_gl4es();
+#endif
 
   I_AtExit(I_ShutdownSDL, true);
 }

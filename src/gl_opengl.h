@@ -42,6 +42,10 @@
 //#define USE_VBO
 
 #include <SDL.h>
+#ifdef __EMSCRIPTEN__
+#include <GL/gl.h>
+//#include <GL/glu.h> // GLU features are not currently used in WASM
+#else
 #include <SDL_opengl.h>
 
 #if SDL_VERSION_ATLEAST(1, 3, 0)
@@ -56,6 +60,7 @@
 #include <GL/glu.h>	/* Header File For The GLU Library */
 #endif
 #endif
+#endif // __EMSCRIPTEN__
 
 #include "doomtype.h"
 

@@ -3272,7 +3272,9 @@ setup_menu_t gen_settings1[] = { // General Settings screen1
   {"Aspect Ratio",                   S_CHOICE,           m_null, G_X, G_Y+ 4*8, {"render_aspect"}, 0, 0, M_ChangeAspectRatio, render_aspects_list},
   {"Fullscreen Video mode",          S_YESNO,            m_null, G_X, G_Y+ 5*8, {"use_fullscreen"}, 0, 0, M_ChangeFullScreen},
   {"Status Bar and Menu Appearance", S_CHOICE,           m_null, G_X, G_Y+ 6*8, {"render_stretch_hud"}, 0, 0, M_ChangeStretch, render_stretch_list},
+#ifndef __EMSCRIPTEN__
   {"Vertical Sync",                  S_YESNO,            m_null, G_X, G_Y+ 7*8, {"render_vsync"}, 0, 0, M_ChangeVideoMode},
+#endif // !__EMSCRIPTEN__
   
   {"Enable Translucency",            S_YESNO,            m_null, G_X, G_Y+ 9*8, {"translucency"}, 0, 0, M_Trans},
   {"Translucency filter percentage", S_NUM,              m_null, G_X, G_Y+10*8, {"tran_filter_pct"}, 0, 0, M_Trans},
@@ -3392,7 +3394,9 @@ setup_menu_t gen_settings4[] = { // General Settings screen3
   {"Flashing HOM indicator",     S_YESNO,  m_null, G_X, G_Y+10*8, {"flashing_hom"}},
 
   // prboom-plus 
+#ifndef __EMSCRIPTEN__
   {"Wipe Screen Effect",         S_YESNO,  m_null, G_X, G_Y+12*8, {"render_wipescreen"}},
+#endif // !__EMSCRIPTEN__
   {"Change Palette On Pain",     S_YESNO,  m_null, G_X, G_Y+14*8, {"palette_ondamage"}, 0, 0, M_ChangeApplyPalette},
   {"Change Palette On Bonus",    S_YESNO,  m_null, G_X, G_Y+15*8, {"palette_onbonus"}, 0, 0, M_ChangeApplyPalette},
   {"Change Palette On Powers",   S_YESNO,  m_null, G_X, G_Y+16*8, {"palette_onpowers"}, 0, 0, M_ChangeApplyPalette},
@@ -4535,11 +4539,17 @@ enum {
   prog_stub1,
   prog_stub2,
   adcr
+#ifdef __EMSCRIPTEN__
+  , wasmcr
+#endif // __EMSCRIPTEN__
 };
 
 enum {
   cr_prog=0,
-  cr_adcr=2,
+  cr_adcr=2
+#ifdef __EMSCRIPTEN__
+  , cr_wasmcr=11
+#endif // __EMSCRIPTEN__
 };
 
 #define CR_S 9
@@ -4565,6 +4575,11 @@ setup_menu_t cred_settings[]={
   {"Michael 'Kodak' Ryssen for DOOMGL",S_SKIP|S_CREDIT|S_LEFTJUST,m_null, CR_X2, CR_Y + CR_S*(adcr+6)+CR_SH*cr_adcr},
   {"Jess Haas for lSDLDoom",S_SKIP|S_CREDIT|S_LEFTJUST,m_null, CR_X2, CR_Y + CR_S*(adcr+7) + CR_SH*cr_adcr},
   {"all others who helped (see AUTHORS file)",S_SKIP|S_CREDIT|S_LEFTJUST,m_null, CR_X2, CR_Y + CR_S*(adcr+8)+CR_SH*cr_adcr},
+
+#ifdef __EMSCRIPTEN__
+  {"WebAssembly Build By",S_SKIP|S_CREDIT|S_LEFTJUST,m_null, CR_X, CR_Y + CR_S*wasmcr + CR_SH*cr_wasmcr},
+  {"Gregory Maynard-Hoare",S_SKIP|S_CREDIT|S_LEFTJUST,m_null, CR_X2, CR_Y + CR_S*(wasmcr+1)+CR_SH*cr_wasmcr},
+#endif // __EMSCRIPTEN__
 
   {0,S_SKIP|S_END,m_null}
 };
