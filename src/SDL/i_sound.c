@@ -1538,8 +1538,10 @@ static int Exp_RegisterSongEx (const void *data, size_t len, int try_mus2mid)
             lprintf (LO_INFO, "Exp_RegisterSongEx: Music player %s on preferred list but it failed to init\n", music_players[i]-> name ());
         }
       }
+#ifndef __EMSCRIPTEN__
       if (!found)
         lprintf (LO_INFO, "Exp_RegisterSongEx: Couldn't find preferred music player %s in list\n  (typo or support not included at compile time)\n", music_player_order[j]);
+#endif // !__EMSCRIPTEN__
     }
     // load failed
   }

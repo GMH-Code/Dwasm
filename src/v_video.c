@@ -482,9 +482,11 @@ static void V_DrawMemPatch(int x, int y, int scrn, const rpatch_t *patch,
     int    w = patch->width;
 
     if (y<0 || y+patch->height > ((flags & VPT_STRETCH) ? 200 :  SCREENHEIGHT)) {
+#ifndef __EMSCRIPTEN__
       // killough 1/19/98: improved error message:
       lprintf(LO_WARN, "V_DrawMemPatch8: Patch (%d,%d)-(%d,%d) exceeds LFB in vertical direction (horizontal is clipped)\n"
-              "Bad V_DrawMemPatch8 (flags=%u)", x, y, x+patch->width, y+patch->height, flags);
+              "Bad V_DrawMemPatch8 (flags=%u)\n", x, y, x+patch->width, y+patch->height, flags);
+#endif // !__EMSCRIPTEN__
       return;
     }
 

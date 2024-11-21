@@ -1327,7 +1327,9 @@ void I_UpdateVideoMode(void)
       init_flags);
     sdl_glcontext = SDL_GL_CreateContext(sdl_window);
 
+#ifndef __EMSCRIPTEN__
     gld_CheckHardwareGamma();
+#endif // !__EMSCRIPTEN__
 #endif
   }
   else
