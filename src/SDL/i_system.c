@@ -101,7 +101,9 @@
 
 void I_uSleep(unsigned long usecs)
 {
+#ifndef __EMSCRIPTEN__
     SDL_Delay(usecs/1000);
+#endif // !__EMSCRIPTEN__
 }
 
 #ifndef PRBOOM_SERVER

@@ -809,6 +809,7 @@ int TXT_ScreenHasBlinkingChars(void)
 
 void TXT_Sleep(int timeout)
 {
+#ifndef __EMSCRIPTEN__
     unsigned int start_time;
 
     if (TXT_ScreenHasBlinkingChars())
@@ -855,6 +856,7 @@ void TXT_Sleep(int timeout)
             SDL_Delay(1);
         }
     }
+#endif // !__EMSCRIPTEN__
 }
 
 void TXT_EnableKeyMapping(int enable)
