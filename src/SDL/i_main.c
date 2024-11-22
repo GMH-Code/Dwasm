@@ -78,6 +78,7 @@ typedef BOOL (WINAPI *SetAffinityFunc)(HANDLE hProcess, DWORD mask);
 #include "e6y.h"
 
 #ifdef __EMSCRIPTEN__
+#include "WASM/wasm_io.h"
 #include <emscripten.h>
 #endif // __EMSCRIPTEN__
 
@@ -594,22 +595,14 @@ void I_SetProcessPriority(void)
   }
 }
 
-//int main(int argc, const char * const * argv)
-int main(int argc, char **argv)
+int main_init(void)
 {
-#ifdef SECURE_UID
-  /* First thing, revoke setuid status (if any) */
-  stored_euid = geteuid();
-  if (getuid() != stored_euid)
-    if (seteuid(getuid()) < 0)
-      fprintf(stderr, "Failed to revoke setuid\n");
-    else
-      fprintf(stderr, "Revoked uid %d\n",stored_euid);
-#endif
+#ifdef __EMSCRIPTEN__
+  if (wasm_restore_busy())
+    return 0;
 
-  myargc = argc;
-  myargv = (char**)malloc(sizeof(myargv[0]) * myargc);
-  memcpy(myargv, argv, sizeof(myargv[0]) * myargc);
+  emscripten_cancel_main_loop();
+#endif // __EMSCRIPTEN__
 
   // e6y: Check for conflicts.
   // Conflicting command-line parameters could cause the engine to be confused 
@@ -674,4 +667,31 @@ int main(int argc, char **argv)
 
   // If running in WASM, return control to the browser
   return 0;
+}
+
+//int main(int argc, const char * const * argv)
+int main(int argc, char **argv)
+{
+#ifdef SECURE_UID
+  /* First thing, revoke setuid status (if any) */
+  stored_euid = geteuid();
+  if (getuid() != stored_euid)
+    if (seteuid(getuid()) < 0)
+      fprintf(stderr, "Failed to revoke setuid\n");
+    else
+      fprintf(stderr, "Revoked uid %d\n",stored_euid);
+#endif
+
+  myargc = argc;
+  myargv = (char**)malloc(sizeof(myargv[0]) * myargc);
+  memcpy(myargv, argv, sizeof(myargv[0]) * myargc);
+
+#ifdef __EMSCRIPTEN__
+  // Initialise the filesystem and wait for completion
+  wasm_init_fs();
+  emscripten_set_main_loop(main_init, 0, 0);
+  return 0;
+#else
+  return main_init();
+#endif // __EMSCRIPTEN__
 }

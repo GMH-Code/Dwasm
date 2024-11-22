@@ -89,6 +89,10 @@
 
 #include "m_io.h"
 
+#ifdef __EMSCRIPTEN__
+#include "WASM/wasm_io.h"
+#endif // __EMSCRIPTEN__
+
 // ano - used for version 255+ demos, like EE or MBF
 static char     prdemosig[] = "PR+UM";
 
@@ -2549,6 +2553,10 @@ static void G_DoSaveGame (dboolean menu)
 
   savedescription[0] = 0;
   free(name);
+
+#ifdef __EMSCRIPTEN__
+  wasm_sync_fs();
+#endif // __EMSCRIPTEN__
 }
 
 static skill_t d_skill;

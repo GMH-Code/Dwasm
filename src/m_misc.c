@@ -88,6 +88,10 @@
 
 #include "m_io.h"
 
+#ifdef __EMSCRIPTEN__
+#include "WASM/wasm_io.h"
+#endif // __EMSCRIPTEN__
+
 /* cph - disk icon not implemented */
 static inline void I_BeginRead(void) {}
 static inline void I_EndRead(void) {}
@@ -1499,6 +1503,10 @@ void M_SaveDefaults (void)
     }
 
   fclose (f);
+
+#ifdef __EMSCRIPTEN__
+  wasm_sync_fs();
+#endif // __EMSCRIPTEN__
 }
 
 /*
@@ -1608,6 +1616,17 @@ void M_LoadDefaults (void)
   // read the file in, overriding any set defaults
 
   f = M_fopen (defaultfile, "r");
+
+#ifdef __EMSCRIPTEN__
+  // If the player's config was not found, temporarily load fallback file
+  if (!f)
+  {
+    const char* fallbackfile = "/defaults/" BOOM_CFG;
+    lprintf(LO_CONFIRM, " loading fallback WASM defaults: %s\n", fallbackfile);
+    f = M_fopen(fallbackfile, "r");
+  }
+#endif // __EMSCRIPTEN__
+
   if (f)
     {
     while (!feof(f))

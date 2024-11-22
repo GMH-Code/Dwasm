@@ -266,6 +266,14 @@ set(PRBOOM_PLUS_SOURCES
     ${EXTRA_FILES}
 )
 
+if(EMSCRIPTEN)
+    set(PRBOOM_PLUS_SOURCES
+        ${PRBOOM_PLUS_SOURCES}
+        WASM/wasm_io.c
+        WASM/wasm_io.h
+    )
+endif()
+
 function(AddGameExecutable TARGET SOURCES)
     if(OPENGL_FOUND AND OPENGL_GLU_FOUND)
         set(SOURCES

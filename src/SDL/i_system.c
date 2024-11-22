@@ -340,6 +340,18 @@ const char* I_GetTempDir(void)
 
 /* Defined elsewhere */
 
+#elif defined(__EMSCRIPTEN__)
+
+const char *I_DoomExeDir(void)
+{
+  return "/dwasm";
+}
+
+const char *I_GetTempDir(void)
+{
+  return "/tmp";
+}
+
 #else
 // cph - V.Aguilar (5/30/99) suggested return ~/.lxdoom/, creating
 //  if non-existant

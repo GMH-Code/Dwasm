@@ -71,6 +71,10 @@
 #include "e6y_launcher.h"
 #endif
 
+#ifdef __EMSCRIPTEN__
+#include "WASM/wasm_io.h"
+#endif // __EMSCRIPTEN__
+
 extern patchnum_t hu_font[HU_FONTSIZE];
 extern dboolean  message_dontfuckwithme;
 
@@ -808,6 +812,10 @@ static void M_DeleteGame(int i)
   G_SaveGameName(name, len+1, i, false);
   M_remove(name);
   free(name);
+
+#ifdef __EMSCRIPTEN__
+  wasm_sync_fs();
+#endif // __EMSCRIPTEN__
 
   M_ReadSaveStrings();
 }

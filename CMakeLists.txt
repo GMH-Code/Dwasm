@@ -7,7 +7,7 @@ project("PrBoom-Plus"
 # The EMSCRIPTEN conditional is available after project configuration
 if(EMSCRIPTEN)
     set(PROJECT_NAME "Dwasm")
-    set(PROJECT_VERSION 1.0.0)
+    set(PROJECT_VERSION 1.1.0)
     set(PROJECT_HOMEPAGE_URL "https://github.com/GMH-Code/Dwasm")
 endif()
 
@@ -270,6 +270,7 @@ else()
             -sINITIAL_MEMORY=64MB \
             -sTOTAL_STACK=2MB \
             -sALLOW_MEMORY_GROWTH \
+            -lidbfs.js \
             --preload-file=../../wasm/fs/@/"
         )
         set(CMAKE_EXECUTABLE_SUFFIX ".html")
