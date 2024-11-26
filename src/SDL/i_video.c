@@ -747,6 +747,32 @@ static const struct {
   { 426, 200}, // 16:9
   { 384, 200}, // 16:10
   { 320, 200}, // Vanilla Doom
+
+#ifdef __EMSCRIPTEN__
+  // Add VESA and other standard modes in WASM because GPU device resolutions
+  // cannot be read.  The browser should still supply its maximum window size.
+  {2048, 1536},
+  {1920, 1440},
+  {2048, 1280},
+  {1920, 1200},
+  {1600, 1200},
+  {2048, 1152},
+  {1920, 1080},
+  {1680, 1050},
+  {1280, 1024},
+  {1280, 960},
+  {1600, 900},
+  {1440, 900},
+  {1536, 864},
+  {1152, 864},
+  {1280, 800},
+  {1366, 768},
+  {1024, 768},
+  {1280, 720},
+  { 800, 600},
+  { 512, 384},
+  { 400, 300},
+#endif // __EMSCRIPTEN__
 };
 static const int num_canonicals = sizeof(canonicals)/sizeof(*canonicals);
 
