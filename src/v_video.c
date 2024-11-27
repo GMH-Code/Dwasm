@@ -1840,6 +1840,7 @@ int V_BestColor(const unsigned char *palette, int r, int g, int b)
 // Alt-Enter: fullscreen <-> windowed
 void V_ToggleFullscreen(void)
 {
+#ifndef __EMSCRIPTEN__
   if (desired_fullscreen == use_fullscreen)
   {
     use_fullscreen = (use_fullscreen ? 0 : 1);
@@ -1858,6 +1859,7 @@ void V_ToggleFullscreen(void)
     gld_PreprocessLevel();
   }
 #endif
+#endif // !__EMSCRIPTEN__
 }
 
 void V_ChangeScreenResolution(void)

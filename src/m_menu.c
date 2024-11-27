@@ -2239,28 +2239,30 @@ static void M_DrawSetting(const setup_menu_t* s)
 static void M_DrawScreenItems(const setup_menu_t* src)
 {
   if (print_warning_about_changes > 0) { /* killough 8/15/98: print warning */
-  //e6y
+    //e6y
     if (warning_about_changes & S_CANT_GL_ARB_MULTITEXTURE) {
-  strcpy(menu_buffer, "Extension GL_ARB_multitexture not found");
-  M_DrawMenuString(30,176,CR_RED);
-  } else
-    if (warning_about_changes & S_CANT_GL_ARB_MULTISAMPLEFACTOR) {
-  strcpy(menu_buffer, "Mast be even number like 0-none, 2, 4, 6");
-  M_DrawMenuString(30,176,CR_RED);
-  } else
-
-    if (warning_about_changes & S_BADVAL) {
-  strcpy(menu_buffer, "Value out of Range");
-  M_DrawMenuString(100,176,CR_RED);
+      strcpy(menu_buffer, "Extension GL_ARB_multitexture not found");
+      M_DrawMenuString(30, 183, CR_RED);
+    } else if (warning_about_changes & S_CANT_GL_ARB_MULTISAMPLEFACTOR) {
+      strcpy(menu_buffer, "Must be even number like 0-none, 2, 4, 6");
+      M_DrawMenuString(30, 183, CR_RED);
+    } else if (warning_about_changes & S_BADVAL) {
+      strcpy(menu_buffer, "Value out of Range");
+      M_DrawMenuString(100, 183, CR_RED);
     } else if (warning_about_changes & S_PRGWARN) {
-        strcpy(menu_buffer, "Warning: Program must be restarted to see changes");
-  M_DrawMenuString(3, 176, CR_RED);
+#ifdef __EMSCRIPTEN__
+      strcpy(menu_buffer, "Program may need restarting to see all changes");
+      M_DrawMenuString(12, 183, CR_RED);
+#else
+      strcpy(menu_buffer, "Warning: Program must be restarted to see changes");
+      M_DrawMenuString(3, 183, CR_RED);
+#endif // __EMSCRIPTEN__
     } else if (warning_about_changes & S_BADVID) {
-        strcpy(menu_buffer, "Video mode not supported");
-  M_DrawMenuString(80,176,CR_RED);
+       strcpy(menu_buffer, "Video mode not supported");
+       M_DrawMenuString(80, 183, CR_RED);
     } else {
-  strcpy(menu_buffer, "Warning: Changes are pending until next game");
-        M_DrawMenuString(18,184,CR_RED);
+      strcpy(menu_buffer, "Warning: Changes are pending until next game");
+       M_DrawMenuString(18, 183, CR_RED);
     }
   }
 
@@ -3275,10 +3277,17 @@ static const char *gltexformats[] = {
 setup_menu_t gen_settings1[] = { // General Settings screen1
 
   {"Video",                          S_SKIP|S_TITLE,     m_null, G_X, G_Y+ 1*8},
+#ifdef __EMSCRIPTEN__
+  {"Video mode",                     S_CHOICE|S_PRGWARN, m_null, G_X, G_Y+ 2*8, {"videomode"}, 0, 0, M_ChangeVideoMode, videomodes},
+  {"Screen Resolution",              S_CHOICE|S_PRGWARN, m_null, G_X, G_Y+ 3*8, {"screen_resolution"}, 0, 0, M_ChangeVideoMode, screen_resolutions_list},
+#else
   {"Video mode",                     S_CHOICE,           m_null, G_X, G_Y+ 2*8, {"videomode"}, 0, 0, M_ChangeVideoMode, videomodes},
   {"Screen Resolution",              S_CHOICE,           m_null, G_X, G_Y+ 3*8, {"screen_resolution"}, 0, 0, M_ChangeVideoMode, screen_resolutions_list},
+#endif // __EMSCRIPTEN__
   {"Aspect Ratio",                   S_CHOICE,           m_null, G_X, G_Y+ 4*8, {"render_aspect"}, 0, 0, M_ChangeAspectRatio, render_aspects_list},
+#ifndef __EMSCRIPTEN__
   {"Fullscreen Video mode",          S_YESNO,            m_null, G_X, G_Y+ 5*8, {"use_fullscreen"}, 0, 0, M_ChangeFullScreen},
+#endif // !__EMSCRIPTEN__
   {"Status Bar and Menu Appearance", S_CHOICE,           m_null, G_X, G_Y+ 6*8, {"render_stretch_hud"}, 0, 0, M_ChangeStretch, render_stretch_list},
 #ifndef __EMSCRIPTEN__
   {"Vertical Sync",                  S_YESNO,            m_null, G_X, G_Y+ 7*8, {"render_vsync"}, 0, 0, M_ChangeVideoMode},
@@ -3498,9 +3507,15 @@ setup_menu_t gen_settings8[] = { // General Settings screen4
   {"Anisotropic filter",         S_CHOICE, m_null, G_X, G_Y+5 *8, {"gl_texture_filter_anisotropic"}, 0, 0, M_ChangeTextureParams, gltexfilters_anisotropics},
   {"Texture format",             S_CHOICE, m_null, G_X, G_Y+6 *8, {"gl_tex_format_string"}, 0, 0, M_ChangeTextureParams, gltexformats},
 
+#ifdef __EMSCRIPTEN__
+  {"Enable Colormaps",           S_YESNO|S_PRGWARN, m_null, G_X,G_Y+ 8*8, {"gl_boom_colormaps"}, 0, 0, M_ChangeAllowBoomColormaps},
+  {"Enable Internal Hi-Res",     S_YESNO|S_PRGWARN, m_null, G_X,G_Y+ 9*8, {"gl_texture_internal_hires"}, 0, 0, M_ChangeTextureUseHires},
+  {"Enable External Hi-Res",     S_YESNO|S_PRGWARN, m_null, G_X,G_Y+10*8, {"gl_texture_external_hires"}, 0, 0, M_ChangeTextureUseHires},
+#else
   {"Enable Colormaps",           S_YESNO, m_null, G_X,G_Y+ 8*8, {"gl_boom_colormaps"}, 0, 0, M_ChangeAllowBoomColormaps},
   {"Enable Internal Hi-Res",     S_YESNO, m_null, G_X,G_Y+ 9*8, {"gl_texture_internal_hires"}, 0, 0, M_ChangeTextureUseHires},
   {"Enable External Hi-Res",     S_YESNO, m_null, G_X,G_Y+10*8, {"gl_texture_external_hires"}, 0, 0, M_ChangeTextureUseHires},
+#endif // __EMSCRIPTEN__
   {"Override PWAD's graphics with Hi-Res" ,S_YESNO|S_PRGWARN,m_null,G_X,G_Y+11*8, {"gl_hires_override_pwads"}, 0, 0, M_ChangeTextureUseHires},
 
   {"Enable High Quality Resize", S_YESNO,  m_null, G_X, G_Y+13*8, {"gl_texture_hqresize"}, 0, 0, M_ChangeTextureHQResize},

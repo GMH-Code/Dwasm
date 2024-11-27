@@ -1078,6 +1078,7 @@ void I_InitScreenResolution(void)
       if (myargv[p+1])
         desired_screenheight = atoi(myargv[p+1]);
 
+#ifndef __EMSCRIPTEN__
     if ((p = M_CheckParm("-fullscreen")))
       use_fullscreen = 1;
 
@@ -1094,6 +1095,7 @@ void I_InitScreenResolution(void)
 
     if ((p = M_CheckParm("-nowindow")))
       desired_fullscreen = 1;
+#endif // !__EMSCRIPTEN__
 
     // e6y
     // change the screen size for the current session only
@@ -1272,6 +1274,13 @@ void I_UpdateVideoMode(void)
 
   if(sdl_window)
   {
+#if defined(__EMSCRIPTEN__) && defined(GL_DOOM)
+  // The GL context becomes corrupt under GL4ES if the window has already been
+  // created.  This prevents us from changing to anything but software mode.
+  if ((video_mode_t)I_GetModeFromString(default_videomode) == VID_MODEGL)
+    return;
+#endif
+
     // video capturing cannot be continued with new screen settings
     I_CaptureFinish();
 

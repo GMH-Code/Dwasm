@@ -186,6 +186,10 @@ dboolean mlook_or_fov;
 int maxViewPitch;
 int minViewPitch;
 
+#ifdef __EMSCRIPTEN__
+video_mode_t I_GetModeFromString(const char *modestr);
+#endif // __EMSCRIPTEN__
+
 #ifdef _WIN32
 const char* WINError(void)
 {
@@ -708,6 +712,12 @@ void ResolveColormapsHiresConflict(dboolean prefer_colormap)
 
 void M_ChangeAllowBoomColormaps(void)
 {
+#ifdef __EMSCRIPTEN__
+  // This results in a blank screen in software mode, so return if not using GL
+  if ((video_mode_t)I_GetModeFromString(default_videomode) != VID_MODEGL)
+    return;
+#endif // __EMSCRIPTEN__
+
   if (gl_boom_colormaps == -1)
   {
     gl_boom_colormaps = gl_boom_colormaps_default;
@@ -724,6 +734,12 @@ void M_ChangeAllowBoomColormaps(void)
 
 void M_ChangeTextureUseHires(void)
 {
+#ifdef __EMSCRIPTEN__
+  // This results in a blank screen in software mode, so return if not using GL
+  if ((video_mode_t)I_GetModeFromString(default_videomode) != VID_MODEGL)
+    return;
+#endif // __EMSCRIPTEN__
+
   ResolveColormapsHiresConflict(false);
 
   gld_FlushTextures();

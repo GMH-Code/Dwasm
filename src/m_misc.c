@@ -471,11 +471,11 @@ default_t defaults[] =
   {"videomode",{NULL, &default_videomode},{0,"8bit"},UL,UL,def_str,ss_none},
   /* 640x480 default resolution */
   {"screen_resolution",{NULL, &screen_resolution},{0,"640x480"},UL,UL,def_str,ss_none},
+#ifndef __EMSCRIPTEN__
   {"use_fullscreen",{&use_fullscreen},{0},0,1, /* proff 21/05/2000 */
    def_bool,ss_none},
   {"exclusive_fullscreen",{&exclusive_fullscreen},{0},0,1, // [FG] mode-changing fullscreen
   def_bool,ss_none},
-#ifndef __EMSCRIPTEN__
   {"render_vsync",{&render_vsync},{1},0,1,
    def_bool,ss_none},
 #endif // !__EMSCRIPTEN__
