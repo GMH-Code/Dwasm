@@ -271,6 +271,7 @@ else()
             -sTOTAL_STACK=2MB \
             -sALLOW_MEMORY_GROWTH \
             -lidbfs.js \
+            --shell-file ../../wasm/shell.html \
             --preload-file=../../wasm/fs/@/"
         )
         set(CMAKE_EXECUTABLE_SUFFIX ".html")
