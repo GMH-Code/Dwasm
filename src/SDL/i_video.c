@@ -102,6 +102,10 @@ static SDL_Cursor* cursors[2] = {NULL, NULL};
 dboolean window_focused;
 static int mouse_currently_grabbed = true;
 
+#if defined(__EMSCRIPTEN__) && defined(GL_DOOM)
+static int gl4es_idle = true;
+#endif
+
 // Window resize state.
 static void ApplyWindowResize(SDL_Event *resize_event);
 
@@ -686,10 +690,6 @@ void I_PreInitGraphics(void)
   {
     I_Error("Could not initialize SDL [%s]", SDL_GetError());
   }
-
-#if defined(__EMSCRIPTEN__) && defined(GL_DOOM)
-  initialize_gl4es();
-#endif
 
   I_AtExit(I_ShutdownSDL, true);
 }
@@ -1319,6 +1319,13 @@ void I_UpdateVideoMode(void)
 
   // Initialize SDL with this graphics mode
   if (V_GetMode() == VID_MODEGL) {
+#if defined(__EMSCRIPTEN__) && defined(GL_DOOM)
+    if (gl4es_idle) {
+      gl4es_idle = false;
+      initialize_gl4es();
+    }
+#endif
+
     init_flags = SDL_WINDOW_OPENGL;
   }
 
