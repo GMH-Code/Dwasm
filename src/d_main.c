@@ -102,6 +102,7 @@
 #include "m_io.h"
 
 #ifdef __EMSCRIPTEN__
+#include "WASM/wasm_io.h"
 #include <emscripten.h>
 #endif // __EMSCRIPTEN__
 
@@ -543,6 +544,7 @@ static void D_DoomLoop(void)
     I_uSleep(quickstart_window_ms * 1000);
 
 #ifdef __EMSCRIPTEN__
+  wasm_hide_console();
   emscripten_set_main_loop(D_LoopLoopIter, 0, 0);
 #else
   for (;;)

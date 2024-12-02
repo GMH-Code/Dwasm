@@ -471,6 +471,10 @@ static void I_Quit (void)
     G_CheckDemoStatus();
   M_SaveDefaults ();
   I_DemoExShutdown();
+
+#ifdef __EMSCRIPTEN__
+  wasm_show_console();
+#endif // __EMSCRIPTEN__
 }
 
 #ifdef SECURE_UID

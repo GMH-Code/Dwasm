@@ -79,6 +79,24 @@ void wasm_sync_fs(void)
   );
 }
 
+void wasm_hide_console(void)
+{
+  // Hide the game console and show the canvas
+  EM_ASM(
+    if (typeof Module.hideConsole === 'function')
+      Module.hideConsole();
+  );
+}
+
+void wasm_show_console(void)
+{
+  // Show the game console and hide the canvas
+  EM_ASM(
+    if (typeof Module.showConsole === 'function')
+      Module.showConsole();
+  );
+}
+
 void wasm_vid_resize(void)
 {
   // Notify JS after a resolution change
