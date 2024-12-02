@@ -92,6 +92,10 @@
 #include "e6y.h"//e6y
 #include "i_main.h"
 
+#ifdef __EMSCRIPTEN__
+#include "WASM/wasm_io.h"
+#endif // __EMSCRIPTEN__
+
 //e6y: new mouse code
 static SDL_Cursor* cursors[2] = {NULL, NULL};
 
@@ -1483,6 +1487,10 @@ void I_UpdateVideoMode(void)
     V_AllocScreens();
 
     R_InitBuffer(SCREENWIDTH, SCREENHEIGHT);
+
+#ifdef __EMSCRIPTEN__
+    wasm_vid_resize();
+#endif
   }
 
   // e6y: wide-res

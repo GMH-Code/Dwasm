@@ -72,6 +72,7 @@
       var statusElement = document.getElementById('status');
       var progressElement = document.getElementById('progress');
       var spinnerElement = document.getElementById('spinner');
+      var canvasElement = document.getElementById('canvas');
 
       var Module = {
         print: (function() {
@@ -92,14 +93,12 @@
           };
         })(),
         canvas: (() => {
-          var canvas = document.getElementById('canvas');
-
           // As a default initial behavior, pop up an alert when webgl context is lost. To make your
           // application robust, you may want to override this behavior before shipping!
           // See http://www.khronos.org/registry/webgl/specs/latest/1.0/#5.15.2
-          canvas.addEventListener("webglcontextlost", (e) => { alert('WebGL context lost. You will need to reload the page.'); e.preventDefault(); }, false);
+          canvasElement.addEventListener("webglcontextlost", (e) => { alert('WebGL context lost. You will need to reload the page.'); e.preventDefault(); }, false);
 
-          return canvas;
+          return canvasElement;
         })(),
         setStatus: (text) => {
           Module.setStatus.last ??= { time: Date.now(), text: '' };
@@ -122,6 +121,10 @@
             if (!text) spinnerElement.hidden = true;
           }
           statusElement.innerHTML = text;
+        },
+        winResized: () => {
+          // Add code to handle changes on canvas width and height, if necessary.  This function can safely be deleted.
+          console.info('Detected window resize: ' + canvasElement.width + 'x' + canvasElement.height);
         },
         totalDependencies: 0,
         monitorRunDependencies: (left) => {
