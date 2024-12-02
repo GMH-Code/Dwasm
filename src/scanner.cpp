@@ -204,7 +204,7 @@ void Scanner::SaveState(Scanner &savedstate)
 	// This saves the entire parser state except for the data pointer.
 	if (savedstate.string != NULL) free(savedstate.string);
 	if (savedstate.nextState.string != NULL) free(savedstate.nextState.string);
-	memcpy(&savedstate, this, sizeof(*this));
+	memcpy((void*)&savedstate, this, sizeof(*this));
 	savedstate.string = strdup(string);
 	savedstate.nextState.string = strdup(nextState.string);
 	savedstate.data = NULL;
