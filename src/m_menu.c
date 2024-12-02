@@ -6118,6 +6118,8 @@ void M_ClearMenus (void)
 
   // if (!netgame && usergame && paused)
   //     sendpause = true;
+
+  wasm_capture_mouse();
 }
 
 //

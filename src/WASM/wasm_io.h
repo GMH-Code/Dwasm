@@ -41,5 +41,6 @@ void wasm_init_fs(void);
 int wasm_restore_busy(void);
 void wasm_sync_fs(void);
 void wasm_vid_resize(void);
+void wasm_capture_mouse(void);
 
 #endif // !__WASM_IO__

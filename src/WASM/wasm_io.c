@@ -87,3 +87,12 @@ void wasm_vid_resize(void)
       Module.winResized();
   );
 }
+
+void wasm_capture_mouse(void)
+{
+  // Ensure the pointer is captured in the canvas
+  EM_ASM(
+    if (typeof Module.captureMouse === 'function')
+      Module.captureMouse();
+  );
+}
