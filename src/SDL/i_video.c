@@ -99,7 +99,11 @@
 //e6y: new mouse code
 static SDL_Cursor* cursors[2] = {NULL, NULL};
 
+#ifdef __EMSCRIPTEN__
+dboolean window_focused = true;
+#else
 dboolean window_focused;
+#endif // __EMSCRIPTEN__
 static int mouse_currently_grabbed = true;
 
 #if defined(__EMSCRIPTEN__) && defined(GL_DOOM)
@@ -115,7 +119,9 @@ static void ActivateMouse(void);
 static void DeactivateMouse(void);
 //static int AccelerateMouse(int val);
 static void I_ReadMouse(void);
+#ifndef __EMSCRIPTEN__
 static dboolean MouseShouldBeGrabbed();
+#endif // !__EMSCRIPTEN__
 static void UpdateFocus(void);
 
 int gl_colorbuffer_bits=16;
@@ -580,7 +586,9 @@ static int newpal = 0;
 void I_FinishUpdate (void)
 {
   //e6y: new mouse code
+#ifndef __EMSCRIPTEN__
   UpdateGrab();
+#endif // !__EMSCRIPTEN__
 
   // The screen wipe following pressing the exit switch on a level
   // is noticably jerkier with I_SkipFrame
@@ -1237,7 +1245,11 @@ void I_InitGraphics(void)
 
     //e6y: new mouse code
     UpdateFocus();
+#ifdef __EMSCRIPTEN__
+    ActivateMouse();
+#else
     UpdateGrab();
+#endif // __EMSCRIPTEN__
   }
 }
 
@@ -1620,6 +1632,7 @@ static void I_ReadMouse(void)
     }
   }
 
+#ifndef __EMSCRIPTEN__
   if (!usemouse)
     return;
 
@@ -1633,8 +1646,10 @@ static void I_ReadMouse(void)
   {
     mouse_currently_grabbed = true;
   }
+#endif // !__EMSCRIPTEN__
 }
 
+#ifndef __EMSCRIPTEN__
 static dboolean MouseShouldBeGrabbed()
 {
   // never grab the mouse when in screensaver mode
@@ -1667,6 +1682,7 @@ static dboolean MouseShouldBeGrabbed()
   // only grab mouse when playing levels (but not demos)
   return (gamestate == GS_LEVEL) && !demoplayback;
 }
+#endif // !__EMSCRIPTEN__
 
 // Update the value of window_focused when we get a focus event
 //
@@ -1675,6 +1691,7 @@ static dboolean MouseShouldBeGrabbed()
 // and we dont move the mouse around if we aren't focused either.
 static void UpdateFocus(void)
 {
+#ifndef __EMSCRIPTEN__
   Uint32 flags = 0;
 
   window_focused = false;
@@ -1686,6 +1703,7 @@ static void UpdateFocus(void)
       window_focused = true;
     }
   }
+#endif // !__EMSCRIPTEN__
 
   // e6y
   // Reuse of a current palette to avoid black screen at software fullscreen modes
@@ -1721,6 +1739,7 @@ static void UpdateFocus(void)
   //    screenvisible = (state & SDL_APPACTIVE) != 0;
 }
 
+#ifndef __EMSCRIPTEN__
 void UpdateGrab(void)
 {
   static dboolean currently_grabbed = false;
@@ -1740,6 +1759,7 @@ void UpdateGrab(void)
 
   currently_grabbed = grab;
 }
+#endif // !__EMSCRIPTEN__
 
 static void ApplyWindowResize(SDL_Event *resize_event)
 {
