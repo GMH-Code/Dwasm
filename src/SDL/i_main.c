@@ -606,7 +606,6 @@ int main_init(void)
     return 0;
 
   emscripten_cancel_main_loop();
-  wasm_capture_mouse();
 #endif // __EMSCRIPTEN__
 
   // e6y: Check for conflicts.

@@ -1247,6 +1247,7 @@ void I_InitGraphics(void)
     UpdateFocus();
 #ifdef __EMSCRIPTEN__
     ActivateMouse();
+    wasm_capture_mouse();
 #else
     UpdateGrab();
 #endif // __EMSCRIPTEN__
