@@ -7,7 +7,7 @@ project("PrBoom-Plus"
 # The EMSCRIPTEN conditional is available after project configuration
 if(EMSCRIPTEN)
     set(PROJECT_NAME "Dwasm")
-    set(PROJECT_VERSION 1.2.1)
+    set(PROJECT_VERSION 1.2.2)
     set(PROJECT_HOMEPAGE_URL "https://github.com/GMH-Code/Dwasm")
 endif()
 

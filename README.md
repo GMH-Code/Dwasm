@@ -90,9 +90,9 @@ Attempts will be made to commit data to browser storage when:
 - Saving your game
 - Changing settings and exiting the game
 
-Alterations should be restored after a browser reload.
+In this version, you get a unique collection of save points per IWAD, so you shouldn't run out if you play more than one game.
 
-Most settings have an immediate effect, but some cannot be done in realtime and require a page reload.
+Most settings have an immediate effect, but some cannot be done in realtime and require a page reload.  Alterations should persist, providing the browser stores the data.
 
 Command-Line Arguments
 ----------------------
@@ -187,7 +187,7 @@ The compatible file should be in the `build_native` folder and match this exactl
 
 To build the main project, place `prboom-plus.wad` and other files (such as an IWAD) that you would like to include into the `wasm/fs` folder.  All filenames must be in **lowercase**.
 
-Next, run these commands in the Dwasm folder.  Replace `/tmp/gl4es` with your GL4ES build, if applicable.  If decided not to build WebGL support, *completely* remove the option `-DGL4ES_PATH=/tmp/gl4es`.
+Next, run these commands in the Dwasm folder.  Replace `/tmp/gl4es` with your GL4ES build, if applicable.  If you decided not to include WebGL support, *completely* remove the option `-DGL4ES_PATH=/tmp/gl4es`.
 
     mkdir build
     cd build
