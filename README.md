@@ -113,6 +113,13 @@ In Dwasm, you can append a single `?` to the end of the URL and place `&` betwee
 
     https://127.0.0.1/?-s&5&-f&-warp&1&2
 
+Physical Gamepads & Joysticks
+-----------------------------
+
+Attached gamepads and analogue controls should work, providing your browser supports their functionality.
+
+To activate a controller, press a button on it during play.  You can also physically add or remove controllers after the game starts.
+
 Networking Support
 ------------------
 

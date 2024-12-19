@@ -398,6 +398,16 @@ while (SDL_PollEvent(Event))
   }
   break;
 
+#ifdef HAVE_SDL_JOYSTICKGETAXIS
+  case SDL_JOYDEVICEADDED:
+    I_UpdateJoystick();
+    break;
+
+  case SDL_JOYDEVICEREMOVED:
+    I_UpdateJoystick();
+    break;
+#endif
+
   case SDL_WINDOWEVENT:
     if (Event->window.windowID == windowid)
     {

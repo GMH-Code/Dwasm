@@ -94,11 +94,19 @@ void I_PollJoystick(void)
 void I_InitJoystick(void)
 {
 #ifdef HAVE_SDL_JOYSTICKGETAXIS
-  const char* fname = "I_InitJoystick : ";
+  if (!usejoystick) return;
+  SDL_InitSubSystem(SDL_INIT_JOYSTICK);
+  I_UpdateJoystick();
+#endif
+}
+
+void I_UpdateJoystick(void)
+{
+#ifdef HAVE_SDL_JOYSTICKGETAXIS
+  const char* fname = "I_UpdateJoystick : ";
   int num_joysticks;
 
   if (!usejoystick) return;
-  SDL_InitSubSystem(SDL_INIT_JOYSTICK);
   num_joysticks=SDL_NumJoysticks();
   if (M_CheckParm("-nojoy") || (usejoystick>num_joysticks) || (usejoystick<0)) {
     if ((usejoystick > num_joysticks) || (usejoystick < 0))
