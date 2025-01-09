@@ -37,6 +37,8 @@ extern int joybstrafeleft;
 extern int joybstraferight;
 extern int joybuse;
 extern int joybspeed;
+extern int joybnextweapon;
+extern int joybprevweapon;
 
 extern int joyleft;
 extern int joyright;
@@ -44,6 +46,7 @@ extern int joyup;
 extern int joydown;
 
 extern int usejoystick;
+extern int joybtncount;
 
 void I_InitJoystick(void);
 void I_UpdateJoystick(void);

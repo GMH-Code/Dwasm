@@ -798,6 +798,10 @@ default_t defaults[] =
    def_int,ss_keys}, // joystick button number to use for running
   {"joyb_use",{&joybuse},{3},0,UL,
    def_int,ss_keys}, // joystick button number to use for use/open
+  {"joyb_prevweapon",{&joybprevweapon},{6},0,UL,
+   def_int,ss_keys}, // joystick button number to use for previous weapon
+  {"joyb_nextweapon",{&joybnextweapon},{7},0,UL,
+   def_int,ss_keys}, // joystick button number to use for next weapon
 
   {"Chat macros",{NULL},{0},UL,UL,def_none,ss_none},
   {"chatmacro0", {0,&chat_macros[0]}, {0,HUSTR_CHATMACRO0},UL,UL,

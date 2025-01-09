@@ -279,6 +279,8 @@ int     joybstrafeleft;
 int     joybstraferight;
 int     joybuse;
 int     joybspeed;
+int     joybnextweapon;
+int     joybprevweapon;
 
 #define MAXPLMOVE   (forwardmove[1])
 #define TURBOTHRESHOLD  0x32
@@ -338,7 +340,7 @@ static int   dclicks2;
 // joystick values are repeated
 static int   joyxmove;
 static int   joyymove;
-static dboolean joyarray[9];
+static dboolean joyarray[11];
 static dboolean *joybuttons = &joyarray[1];    // allow [-1]
 
 // Game events info
@@ -1070,16 +1072,22 @@ dboolean G_Responder (event_t* ev)
       return true;    // eat events
 
     case ev_joystick:
-      joybuttons[0] = ev->data1 & 1;
-      joybuttons[1] = ev->data1 & 2;
-      joybuttons[2] = ev->data1 & 4;
-      joybuttons[3] = ev->data1 & 8;
-      joybuttons[4] = ev->data1 & 16;
-      joybuttons[5] = ev->data1 & 32;
-      joybuttons[6] = ev->data1 & 64;
-      joybuttons[7] = ev->data1 & 128;
+      // Map joystick data to internal buttons
+      for (int btn = 0; btn < joybtncount; btn++)
+        joybuttons[btn] = ev->data1 & (1 << btn);
+
       joyxmove = ev->data2;
       joyymove = ev->data3;
+
+      // Schedule a weapon swap if necessary
+      if ((gamestate == GS_LEVEL) && (players[consoleplayer].pendingweapon == wp_nochange))
+      {
+        if (joybuttons[joybprevweapon])
+          next_weapon = -1;
+        else if (joybuttons[joybnextweapon])
+          next_weapon = 1;
+      }
+
       return true;    // eat events
 
     default:

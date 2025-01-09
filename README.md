@@ -120,6 +120,13 @@ Attached gamepads and analogue controls should work, providing your browser supp
 
 To activate a controller, press a button on it during play.  You can also physically add or remove controllers after the game starts.
 
+Extra features related to gamepads include:
+
+- You can swap weapons with the secondary trigger buttons by default.
+- You can redefine almost all the gamepad buttons instead of just the front four action buttons, including those that are not yet bound to a function.
+
+Note that the choice of features you can bind (link) buttons to is currently limited.  This is due to the way *DOOM* handles joystick, keyboard and mouse button events separately, instead of having a more abstract binding system for all input events.  This was changed in later engines.
+
 Networking Support
 ------------------
 

@@ -53,6 +53,7 @@ int joyup;
 int joydown;
 
 int usejoystick;
+int joybtncount;
 
 #ifdef HAVE_SDL_JOYSTICKGETAXIS
 static SDL_Joystick *joystick;
@@ -71,15 +72,11 @@ void I_PollJoystick(void)
 
   if (!usejoystick || (!joystick)) return;
   ev.type = ev_joystick;
-  ev.data1 =
-    (SDL_JoystickGetButton(joystick, 0)<<0) |
-    (SDL_JoystickGetButton(joystick, 1)<<1) |
-    (SDL_JoystickGetButton(joystick, 2)<<2) |
-    (SDL_JoystickGetButton(joystick, 3)<<3) |
-    (SDL_JoystickGetButton(joystick, 4)<<4) |
-    (SDL_JoystickGetButton(joystick, 5)<<5) |
-    (SDL_JoystickGetButton(joystick, 6)<<6) |
-    (SDL_JoystickGetButton(joystick, 7)<<7);
+  ev.data1 = 0;
+
+  for (int btn = 0; btn < joybtncount; btn++)
+    ev.data1 |= SDL_JoystickGetButton(joystick, btn) << btn;
+
   axis_value = SDL_JoystickGetAxis(joystick, 0) / 3000;
   if (abs(axis_value)<7) axis_value=0;
   ev.data2 = axis_value;
@@ -119,8 +116,13 @@ void I_UpdateJoystick(void)
   if (!joystick)
     lprintf(LO_ERROR, "%serror opening joystick %d\n", fname, usejoystick);
   else {
+    joybtncount = SDL_JoystickNumButtons(joystick);
+
+    if (joybtncount > 12)
+      joybtncount = 12;
+
     I_AtExit(I_EndJoystick, true);
-    lprintf(LO_INFO, "%sopened %s\n", fname, SDL_JoystickName(joystick));
+    lprintf(LO_INFO, "%sopened %s with %i buttons\n", fname, SDL_JoystickName(joystick), joybtncount);
     joyup = 32767;
     joydown = -32768;
     joyright = 32767;

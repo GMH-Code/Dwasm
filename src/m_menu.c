@@ -2545,8 +2545,8 @@ setup_menu_t keys_settings3[] =  // Key Binding screen strings
   {"BFG",     S_KEY       ,m_scrn,KB_X,KB_Y+ 7*8,{&key_weapon7},&mb_weapon7},
   {"CHAINSAW",S_KEY       ,m_scrn,KB_X,KB_Y+ 8*8,{&key_weapon8},&mb_weapon8},
   {"SSG"     ,S_KEY       ,m_scrn,KB_X,KB_Y+ 9*8,{&key_weapon9},&mb_weapon9},
-  {"NEXT"    ,S_KEY       ,m_scrn,KB_X,KB_Y+11*8,{&key_nextweapon}},
-  {"PREVIOUS",S_KEY       ,m_scrn,KB_X,KB_Y+12*8,{&key_prevweapon}},
+  {"NEXT"    ,S_KEY       ,m_scrn,KB_X,KB_Y+11*8,{&key_nextweapon},0,&joybnextweapon},
+  {"PREVIOUS",S_KEY       ,m_scrn,KB_X,KB_Y+12*8,{&key_prevweapon},0,&joybprevweapon},
   {"BEST"    ,S_KEY       ,m_scrn,KB_X,KB_Y+13*8,{&key_weapontoggle}},
   {"FIRE"    ,S_KEY       ,m_scrn,KB_X,KB_Y+15*8,{&key_fire},&mousebfire,&joybfire},
 
@@ -4709,15 +4709,12 @@ dboolean M_Responder (event_t* ev) {
       }
 
     // phares 4/4/98:
-    // Handle joystick buttons 3 and 4, and allow them to pass down
+    // Handle joystick buttons 3 to 12, and allow them to pass down
     // to where key binding can eat them.
 
     if (setup_active && set_keybnd_active) {
-      if (ev->data1&4) {
-  ch = 0; // meaningless, just to get you past the check for -1
-  joywait = I_GetTime() + 5;
-      }
-      if (ev->data1&8) {
+      // Isolate bits 2 to 11 (buttons 3 to 12) for check
+      if (ev->data1 & 0xFFC) {
   ch = 0; // meaningless, just to get you past the check for -1
   joywait = I_GetTime() + 5;
       }
@@ -5367,7 +5364,7 @@ dboolean M_Responder (event_t* ev) {
     {
       if (ev->type == ev_joystick)
         {
-    int oldbutton;
+    int oldbutton, joy_btn_bit;
     setup_group group;
     dboolean search = true;
 
@@ -5383,16 +5380,20 @@ dboolean M_Responder (event_t* ev) {
 
     oldbutton = *ptr1->m_joy;
     group  = ptr1->m_group;
-    if (ev->data1 & 1)
-      ch = 0;
-    else if (ev->data1 & 2)
-      ch = 1;
-    else if (ev->data1 & 4)
-      ch = 2;
-    else if (ev->data1 & 8)
-      ch = 3;
-    else
+
+    // Check that just one joystick data bit is set from position 0 to 11 (buttons 1 to 12)
+    if (ev->data1 == 0 || ev->data1 > 0x800 || (ev->data1 & (ev->data1 - 1)) != 0)
       return true;
+
+    ch = 0;
+    joy_btn_bit = ev->data1;
+
+    while (joy_btn_bit > 1)
+    {
+      ch++;
+      joy_btn_bit >>= 1;
+    }
+
     for (i = 0 ; keys_settings[i] && search ; i++)
       for (ptr2 = keys_settings[i] ; !(ptr2->m_flags & S_END) ; ptr2++)
         if (ptr2->m_group == group && ptr1 != ptr2)
