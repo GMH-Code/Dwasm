@@ -1517,11 +1517,11 @@ void I_UpdateVideoMode(void)
     V_AllocScreens();
 
     R_InitBuffer(SCREENWIDTH, SCREENHEIGHT);
+  }
 
 #ifdef __EMSCRIPTEN__
-    wasm_vid_resize();
+  wasm_vid_resize();
 #endif
-  }
 
   // e6y: wide-res
   // Need some initialisations before level precache
