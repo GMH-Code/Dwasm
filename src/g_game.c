@@ -2464,18 +2464,8 @@ void (CheckSaveGame)(size_t size, const char* file, int line)
 
 int G_SaveGameName(char *name, size_t size, int slot, dboolean demoplayback)
 {
-#ifdef __EMSCRIPTEN__
-  return doom_snprintf (
-    name, size, "%s/%s.%ssave%d.dsg",
-    basesavegame,
-    numwadfiles > 0 ? wadfiles[0].name : "noname",
-    demoplayback ? "demo" : "",
-    slot
-  );
-#else
   const char* sgn = demoplayback ? "demosav" : savegamename;
   return doom_snprintf (name, size, "%s/%s%d.dsg", basesavegame, sgn, slot);
-#endif // __EMSCRIPTEN__
 }
 
 static void G_DoSaveGame (dboolean menu)
