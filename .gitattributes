@@ -353,4 +353,4 @@ tests/heightlist_overflow.wad -text
 tests/missed_back_side.zip -text
 tests/sky.wad -text
 tests/weaponinfo.wad -text
-wasm/fs/defaults/prboom-plus.cfg eol=lf
+wasm/fs/defaults/prboomX.cfg eol=lf
