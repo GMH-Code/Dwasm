@@ -59,6 +59,9 @@ DSDGACT
 DSDGDTH
 DSDGPAIN
 DSSECRET
+DSSECALL
+DSITMALL
+DSKILALL
 DSGIBDTH
 
 # List of Pictures (with insertion point)

@@ -43,6 +43,8 @@
 #include "p_pspr.h"
 #include "lprintf.h"
 #include "e6y.h"//e6y
+#include "c_cmd.h"
+#include "c_cvar.h"
 
 #define BASEYCENTER 100
 
@@ -1473,6 +1475,6 @@ void R_DrawMasked(void)
 
   // draw the psprites on top of everything
   //  but does not draw on side views
-  if (!viewangleoffset && !viewpitchoffset)
+  if (!viewangleoffset && !viewpitchoffset && C_CvarIsSet("r_drawplayersprites"))
     R_DrawPlayerSprites ();
 }

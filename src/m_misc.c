@@ -295,6 +295,8 @@ extern int endoom_mode;
 
 extern const char* S_music_files[]; // cournia
 
+int fps_limit;
+
 /* cph - Some MBF stuff parked here for now
  * killough 10/98
  */
@@ -317,6 +319,8 @@ default_t defaults[] =
    def_int,ss_none}, // percentage of normal speed (35 fps) realtic clock runs at
   {"menu_background", {(int*)&menu_background}, {1}, 0, 1,
    def_bool,ss_none}, // do Boom fullscreen menus have backgrounds?
+  {"organize_saves", {(int*)&organize_saves}, {1}, 0, 1,
+   def_bool,ss_none},
   {"max_player_corpse", {&bodyquesize}, {32},-1,UL,   // killough 2/8/98
    def_int,ss_none}, // number of dead bodies in view supported (-1 = no limit)
   {"flashing_hom",{&flashing_hom},{0},0,1,
@@ -332,6 +336,11 @@ default_t defaults[] =
   {"demo_smoothturnsfactor", {&demo_smoothturnsfactor},  {6},1,SMOOTH_PLAYING_MAXFACTOR,
    def_int,ss_stat},
   {"boom_autoswitch", {(int*)&boom_autoswitch}, {1}, 0, 1, def_bool, ss_none},
+  {"skip_quicksaveload_confirmation", {(int*)&skip_quicksaveload_confirmation}, {0},0,1,def_bool,ss_auto},
+  {"no_save_message", {(int*)&no_save_message}, {0},0,1,def_bool,ss_auto},
+  {"enable_time_warping", {(int*)&enable_time_warping}, {0},0,1,def_bool,ss_auto},
+  {"autoload_timeline", {(int*)&autoload_timeline}, {0},0,1,def_bool,ss_auto},
+  {"autosave_timeline_on_exit", {(int*)&autosave_timeline_on_exit}, {0},0,1,def_bool,ss_auto},
    
   {"Files",{NULL},{0},UL,UL,def_none,ss_none},
   /* cph - MBF-like wad/deh/bex autoload code */
@@ -422,12 +431,13 @@ default_t defaults[] =
   {"comp_soul",{&default_comp[comp_soul]},{0},0,1,def_bool,ss_comp,&comp[comp_soul]},
   {"comp_maskedanim",{&default_comp[comp_maskedanim]},{0},0,1,def_bool,ss_comp,&comp[comp_maskedanim]},
   //e6y
-  {"PrBoom-plus compatibility settings",{NULL},{0},UL,UL,def_none,ss_none},
+  {"PrBoomX compatibility settings",{NULL},{0},UL,UL,def_none,ss_none},
   {"comp_ouchface",{&default_comp[comp_ouchface]},{0},0,1,def_bool,ss_comp,&comp[comp_ouchface]},
   {"comp_maxhealth",{&default_comp[comp_maxhealth]},{0},0,1,def_bool,ss_comp,&comp[comp_maxhealth]},
   {"comp_translucency",{&default_comp[comp_translucency]},{0},0,1,def_bool,ss_comp,&comp[comp_translucency]},
   // [FG] allow MBF sky transfers in all complevels
   {"comp_skytransfers",{&comp_skytransfers},{0},0,1,def_bool,ss_comp},
+  {"comp_fix_blockmap",{&comp_fix_blockmap},{0},0,1,def_bool,ss_comp},
 
   {"Sound settings",{NULL},{0},UL,UL,def_none,ss_none},
   {"snd_pcspeaker",{&snd_pcspeaker},{0}, 0, 1, def_bool,ss_none},
@@ -489,6 +499,8 @@ default_t defaults[] =
    def_int,ss_none}, // gamma correction level // killough 1/18/98
   {"uncapped_framerate", {&movement_smooth_default},  {1},0,1,
    def_bool,ss_stat},
+  {"fps_limit", {&fps_limit},  {60},0,1000,
+   def_int,ss_stat},
   {"filter_wall",{(int*)&drawvars.filterwall},{RDRAW_FILTER_POINT},
    RDRAW_FILTER_POINT, RDRAW_FILTER_ROUNDED, def_int,ss_none},
   {"filter_floor",{(int*)&drawvars.filterfloor},{RDRAW_FILTER_POINT},
@@ -735,6 +747,8 @@ default_t defaults[] =
    0,MAX_KEY,def_key,ss_keys}, // key to toggle overlaying the automap on the rendered display
   {"key_map_textured", {&key_map_textured},   {0}             ,
    0,MAX_KEY,def_key,ss_keys}, // key to toggle textured automap
+  {"key_map_magicsector", {&key_map_magicsector},   {'x'},
+   0,MAX_KEY,def_key,ss_keys}, // key to toggle textured automap
   {"key_reverse",     {&key_reverse},         {'/'}           ,
    0,MAX_KEY,def_key,ss_keys}, // key to spin 180 instantly
   {"key_zoomin",      {&key_zoomin},          {'='}           ,
@@ -776,8 +790,26 @@ default_t defaults[] =
    0,MAX_KEY,def_key,ss_keys}, // key to cycle to the previous weapon
 
   // killough 2/22/98: screenshot key
-  {"key_screenshot",  {&key_screenshot},      {'*'}            ,
+  {"key_screenshot",  {&key_screenshot},      {'*'},
    0,MAX_KEY,def_key,ss_keys}, // key to take a screenshot
+
+  {"key_console",     {&key_console},         {'~'},
+   0,MAX_KEY,def_key,ss_keys}, // key to toggle console
+                               //
+  {"key_timewarp_forward",     {&key_timewarp_forward},         {']'},
+   0,MAX_KEY,def_key,ss_keys}, // key to move forward in time
+                               //
+  {"key_timewarp_backward",     {&key_timewarp_backward},         {'['},
+   0,MAX_KEY,def_key,ss_keys}, // key to move forward in time
+                               //
+  {"key_console_complete",     {&key_console_complete},         {KEYD_TAB},
+   0,MAX_KEY,def_key,ss_keys},
+
+  {"key_console_history_up",   {&key_console_history_up},         {KEYD_UPARROW},
+   0,MAX_KEY,def_key,ss_keys},
+
+  {"key_console_history_down", {&key_console_history_down},         {KEYD_DOWNARROW},
+   0,MAX_KEY,def_key,ss_keys},
 
   {"Joystick settings",{NULL},{0},UL,UL,def_none,ss_none},
   {"use_joystick",{&usejoystick},{0},0,2,
@@ -868,6 +900,10 @@ default_t defaults[] =
    def_colour,ss_auto}, // color used for counted items
   {"mapcolor_hair", {&mapcolor_hair}, {208},0,255,  // white
    def_colour,ss_auto}, // color used for dot crosshair denoting center of map
+
+  {"mapcolor_hai2", {&mapcolor_hai2}, {248},0,255,  // peach
+   def_colour,ss_auto}, // color used for dot crosshair denoting center of map
+
   {"mapcolor_sngl", {&mapcolor_sngl}, {208},0,255,  // white
    def_colour,ss_auto}, // color used for the single player arrow
   {"mapcolor_me",   {&mapcolor_me}, {112},0,255, // green
@@ -876,6 +912,15 @@ default_t defaults[] =
    def_colour,ss_auto},
   {"mapcolor_frnd",   {&mapcolor_frnd}, {112},0,255,
    def_colour,ss_auto},
+   // secret exit
+  {"mapcolor_exis",   {&mapcolor_exis,NULL}, {197,NULL},0,255,
+   def_colour,ss_auto,NULL,NULL},
+   // automap secret line
+  {"mapcolor_asec",   {&mapcolor_asec,NULL}, {249,NULL},0,255,
+   def_colour,ss_auto,NULL,NULL},
+    // found secret line
+  {"mapcolor_secf",   {&mapcolor_secf,NULL}, {254,NULL},0,255,
+        def_colour,ss_auto,NULL,NULL},
   //jff 3/9/98 add option to not show secrets til after found
   {"map_secret_after", {&map_secret_after}, {0},0,1, // show secret after gotten
    def_bool,ss_auto}, // prevents showing secret sectors till after entered
@@ -914,6 +959,11 @@ default_t defaults[] =
    def_int,ss_auto},
   {"map_things_appearance", {(int*)&map_things_appearance}, {map_things_appearance_max-1},0,map_things_appearance_max-1,
    def_int,ss_auto},
+  {"map_enhanced_allmap", {&map_enhanced_allmap}, {1},0,1,
+   def_bool,ss_auto},
+  {"map_player_arrow_appearance", {(int*)&map_player_arrow_appearance}, {map_player_arrow_appearance_max-1},0,map_player_arrow_appearance_max-1,
+   def_int,ss_auto},
+
 
   {"Heads-up display settings",{NULL},{0},UL,UL,def_none,ss_none},
   //jff 2/16/98 defaults for color ranges in hud and status
@@ -930,6 +980,8 @@ default_t defaults[] =
   {"hudcolor_mesg", {&hudcolor_mesg}, {6},0,9,  // red range
    def_int,ss_mess}, // color range used for messages during play
   {"hudcolor_chat", {&hudcolor_chat}, {5},0,9,  // gold range
+   def_int,ss_mess}, // color range used for chat messages and entry
+  {"hudcolor_console", {&hudcolor_console}, {4},0,9,  // gold range
    def_int,ss_mess}, // color range used for chat messages and entry
   {"hudcolor_list", {&hudcolor_list}, {5},0,9,  // gold range  //jff 2/26/98
    def_int,ss_mess}, // color range used for message review
@@ -966,7 +1018,7 @@ default_t defaults[] =
    def_bool,ss_none}, // enables display of HUD
 
 //e6y
-  {"Prboom-plus key bindings",{NULL},{0},UL,UL,def_none,ss_none},
+  {"PrboomX key bindings",{NULL},{0},UL,UL,def_none,ss_none},
   {"key_speedup", {&key_speed_up}, {0},
    0,MAX_KEY,def_key,ss_keys},
   {"key_speeddown", {&key_speed_down}, {0},
@@ -990,7 +1042,7 @@ default_t defaults[] =
   {"key_showalive", {&key_showalive}, {KEYD_KEYPADDIVIDE},
    0,MAX_KEY,def_key,ss_keys},
 
-  {"Prboom-plus heads-up display settings",{NULL},{0},UL,UL,def_none,ss_none},
+  {"PrboomX heads-up display settings",{NULL},{0},UL,UL,def_none,ss_none},
   {"hudadd_gamespeed", {&hudadd_gamespeed},  {0},0,1,
    def_bool,ss_stat},
   {"hudadd_leveltime", {&hudadd_leveltime},  {0},0,1,
@@ -1019,9 +1071,15 @@ default_t defaults[] =
    def_int,ss_stat},
   {"hudadd_crosshair_lock_target", {&hudadd_crosshair_lock_target},  {0},0,1,
    def_bool,ss_stat},
+  {"hudadd_announce_100p_secrets", {&hudadd_announce_100p_secrets},  {0},0,1,
+   def_bool,ss_stat},
+  {"hudadd_announce_100p_items", {&hudadd_announce_100p_items},  {0},0,1,
+   def_bool,ss_stat},
+  {"hudadd_announce_100p_kills", {&hudadd_announce_100p_kills},  {0},0,1,
+   def_bool,ss_stat},
 
   //e6y
-  {"Prboom-plus mouse settings",{NULL},{0},UL,UL,def_none,ss_none},
+  {"PrboomX mouse settings",{NULL},{0},UL,UL,def_none,ss_none},
   {"mouse_acceleration",{&mouse_acceleration},{0},0,UL,
    def_int,ss_none},
   {"mouse_sensitivity_mlook",{&mouseSensitivity_mlook},{10},0,UL,
@@ -1031,7 +1089,7 @@ default_t defaults[] =
   {"mouse_carrytics", {&mouse_carrytics}, {0},0,1,
    def_bool,ss_stat},
 
-  {"Prboom-plus demos settings",{NULL},{0},UL,UL,def_none,ss_none},
+  {"PrboomX demos settings",{NULL},{0},UL,UL,def_none,ss_none},
   {"demo_extendedformat", {&demo_extendedformat_default},  {1},0,1,
    def_bool,ss_stat},
   {"demo_demoex_filename", {NULL,&demo_demoex_filename}, {0,""},UL,UL,
@@ -1043,7 +1101,7 @@ default_t defaults[] =
   {"quickstart_window_ms", {&quickstart_window_ms},  {0},0,1000,
    def_int,ss_stat},
 
-  {"Prboom-plus game settings",{NULL},{0},UL,UL,def_none,ss_none},
+  {"PrboomX game settings",{NULL},{0},UL,UL,def_none,ss_none},
   {"movement_strafe50", {&movement_strafe50},  {0},0,1,
    def_bool,ss_stat},
   {"movement_shorttics", {&movement_shorttics},  {0},0,1,
@@ -1051,7 +1109,7 @@ default_t defaults[] =
   {"interpolation_maxobjects", {&interpolation_maxobjects},  {0},0,UL,
    def_int,ss_stat},
 
-  {"Prboom-plus misc settings",{NULL},{0},UL,UL,def_none,ss_none},
+  {"PrboomX misc settings",{NULL},{0},UL,UL,def_none,ss_none},
   {"showendoom", {&showendoom},  {0},0,1,
    def_bool,ss_stat},
   {"screenshot_dir", {NULL,&screenshot_dir}, {0,""},UL,UL,
@@ -1078,7 +1136,7 @@ default_t defaults[] =
   {"cap_fps", {&cap_fps},{60},16,300,def_int,ss_none},
   {"cap_wipescreen", {&cap_wipescreen},{0},0,1,def_bool,ss_none},
 
-  {"Prboom-plus video settings",{NULL},{0},UL,UL,def_none,ss_none},
+  {"PrboomX video settings",{NULL},{0},UL,UL,def_none,ss_none},
   {"sdl_video_window_pos", {NULL,&sdl_video_window_pos}, {0,"center"},UL,UL,
    def_str,ss_none},
   {"palette_ondamage", {&palette_ondamage},  {1},0,1,
@@ -1123,7 +1181,7 @@ default_t defaults[] =
   {"movement_mouseinvert", {&movement_mouseinvert},  {0},0,1,
    def_bool,ss_stat},
 
-  {"Prboom-plus OpenGL settings",{NULL},{0},UL,UL,def_none,ss_none},
+  {"PrboomX OpenGL settings",{NULL},{0},UL,UL,def_none,ss_none},
   {"gl_allow_detail_textures", {&gl_allow_detail_textures},  {1},0,1,
    def_bool,ss_stat},
   {"gl_detail_maxdist", {&gl_detail_maxdist},  {0},0,65535,
@@ -1196,7 +1254,7 @@ default_t defaults[] =
   {"gl_weaponspritefuzzmode",{(int*)&gl_weaponspritefuzzmode},{fuzz_darken},fuzz_darken,fuzz_last-1,
       def_int, ss_none},
 
-  {"Prboom-plus emulation settings",{NULL},{0},UL,UL,def_none,ss_none},
+  {"PrboomX emulation settings",{NULL},{0},UL,UL,def_none,ss_none},
   {"overrun_spechit_warn", {&overflows[OVERFLOW_SPECHIT].warn},  {0},0,1,
    def_bool,ss_stat},
   {"overrun_spechit_emulate", {&overflows[OVERFLOW_SPECHIT].emulate},  {1},0,1,
@@ -1222,7 +1280,7 @@ default_t defaults[] =
   {"overrun_missedbackside_emulate", {&overflows[OVERFLOW_MISSEDBACKSIDE].emulate},  {0},0,1,
    def_bool,ss_stat},
 
-  {"Prboom-plus 'bad' compatibility settings",{NULL},{0},UL,UL,def_none,ss_none},
+  {"PrboomX 'bad' compatibility settings",{NULL},{0},UL,UL,def_none,ss_none},
   {"comperr_zerotag", {&default_comperr[comperr_zerotag]},  {0},0,1,
    def_bool,ss_stat},
   {"comperr_passuse", {&default_comperr[comperr_passuse]},  {0},0,1,
@@ -1237,7 +1295,7 @@ default_t defaults[] =
    def_bool,ss_stat},
 
 #ifdef USE_WINDOWS_LAUNCHER
-  {"Prboom-plus launcher settings",{NULL},{0},UL,UL,def_none,ss_none},
+  {"PrboomX launcher settings",{NULL},{0},UL,UL,def_none,ss_none},
   {"launcher_enable",{(int*)&launcher_enable},{launcher_enable_never},
    launcher_enable_never, launcher_enable_count - 1, def_int,ss_none},
   {"launcher_history0", {NULL,&launcher_history[0]}, {0,""},UL,UL,def_str,ss_none},
@@ -1251,7 +1309,7 @@ default_t defaults[] =
   {"launcher_history8", {NULL,&launcher_history[8]}, {0,""},UL,UL,def_str,ss_none},
   {"launcher_history9", {NULL,&launcher_history[9]}, {0,""},UL,UL,def_str,ss_none},
 #endif
-  {"Prboom-plus demo patterns list. Put your patterns here",{NULL},{0},UL,UL,def_none,ss_none},
+  {"PrboomX demo patterns list. Put your patterns here",{NULL},{0},UL,UL,def_none,ss_none},
   {"demo_patterns_mask", {NULL, &demo_patterns_mask, &demo_patterns_count, &demo_patterns_list}, {0,"demo_pattern",9, &demo_patterns_list_def[0]},UL,UL,def_arr,ss_none},
   {"demo_pattern0", {NULL,&demo_patterns_list_def[0]}, 
    {0,"DOOM 2: Hell on Earth/((lv)|(nm)|(pa)|(ty))\\d\\d.\\d\\d\\d\\.lmp/doom2.wad"},UL,UL,def_str,ss_none},
@@ -1549,6 +1607,7 @@ void M_LoadDefaults (void)
   char* strparm = malloc(CFG_BUFFERMAX);
   char* cfgline = malloc(CFG_BUFFERMAX);
   char* newstring = NULL;   // killough
+  char* prboomx_wad = strdup(PACKAGE_TARNAME ".wad");
   int   parm;
   dboolean isstring;
   // e6y: arrays
@@ -1599,7 +1658,7 @@ void M_LoadDefaults (void)
 
   // check for a custom default file
 
-#define BOOM_CFG "prboom-plus.cfg"
+#define BOOM_CFG "prboomX.cfg"
 
   i = M_CheckParm ("-config");
   if (i && i < myargc-1)
@@ -1747,8 +1806,12 @@ void M_LoadDefaults (void)
   /* proff 2001/7/1 - added prboom.wad as last entry so it's always loaded and
      doesn't overlap with the cfg settings */
   //e6y: Check on existence of prboom.wad
-  if (!(wad_files[0] = I_FindFile(PACKAGE_TARNAME ".wad", "")))
-    I_Error("PrBoom-Plus.wad not found. Can't continue.");
+  //jds: use lowercased package name for case-sensitive filesystems
+  for (i=0; i<strlen(prboomx_wad); i++)
+      prboomx_wad[i] = tolower(prboomx_wad[i]);
+  if (!(wad_files[0] = I_FindFile(prboomx_wad, "")))
+    I_Error("prboomx.wad not found. Can't continue.");
+  free(prboomx_wad);
 }
 
 

@@ -35,7 +35,7 @@
 #define __M_CHEAT__
 
 #define CHEAT(cheat, deh_cheat, when, func, arg) \
-  { cheat, deh_cheat, when, func, arg, 0, 0, \
+  { cheat, cheat, deh_cheat, when, func, arg, 0, 0, \
     sizeof(cheat) - 1, 0, 0, 0, "" }
 
 #define CHEAT_ARGS_MAX 8  /* Maximum number of args at end of cheats */
@@ -44,6 +44,7 @@
 
 typedef struct cheatseq_s {
   const char *	cheat;
+  const char *	orig_cheat;
   const char *const deh_cheat;
   enum {
     always   = 0,

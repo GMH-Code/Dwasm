@@ -43,6 +43,7 @@
 #include "r_fps.h"
 #include "g_game.h"
 #include "e6y.h"//e6y
+#include "c_cvar.h"
 
 //
 // Movement.
@@ -169,7 +170,7 @@ void P_CalcHeight (player_t* player)
         player->bob = MAXBOB;
     }
 
-  if (!onground || player->cheats & CF_NOMOMENTUM)
+  if (!onground || player->cheats & CF_NOMOMENTUM || (player->health > 0 && C_CvarIsSet("weapon_bob_only")))
     {
     player->viewz = player->mo->z + VIEWHEIGHT;
 

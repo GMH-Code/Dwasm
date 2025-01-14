@@ -35,8 +35,6 @@ void M_AddEpisode(const char *map, const char *gfx, const char *txt, const char 
 void M_ClearEpisodes(void);
 
 MapList Maps;
-}
-
 
 //==========================================================================
 //
@@ -45,7 +43,7 @@ MapList Maps;
 //
 //==========================================================================
 
-static const char * const ActorNames[] =
+const char * const ActorNames[] =
 {
 	"DoomPlayer",
 	"ZombieMan",
@@ -302,6 +300,7 @@ static const char * const ActorNames[] =
 	NULL
 };
 
+}
 
 // -----------------------------------------------
 //
@@ -495,7 +494,8 @@ static int ParseStandardProperty(Scanner &scanner, MapEntry *mape)
 	{
 		scanner.MustGetToken(TK_BoolConst);
 		if (scanner.boolean) strcpy(mape->endpic, "!");
-		else strcpy(mape->endpic, "-");
+        /* Null endpic will prevent triggering endgame state during gameplay */
+		else mape->endpic[0] = '\0';
 	}
 	else if (!stricmp(pname, "exitpic"))
 	{

@@ -73,8 +73,12 @@ int ParseUMapInfo(const unsigned char *buffer, size_t length, umapinfo_errorfunc
 void FreeMapList();
 struct MapProperty *FindProperty(struct MapEntry *map, const char *name);
 
+extern const char * const ActorNames[];
+
 #ifdef __cplusplus
 }
 #endif
+
+
 
 #endif

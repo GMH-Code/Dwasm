@@ -71,6 +71,7 @@
 #include "st_stuff.h"
 #include "hu_stuff.h"
 #include "e6y.h"//e6y
+#include "c_cvar.h"
 
 // All OpenGL extentions will be disabled in gl_compatibility mode
 int gl_compatibility = 0;
@@ -1321,7 +1322,7 @@ void gld_EndDrawScene(void)
   gl_EnableFog(false);
   gld_Set2DMode();
 
-  if (!viewangleoffset && !viewpitchoffset)
+  if (!viewangleoffset && !viewpitchoffset && C_CvarIsSet("r_drawplayersprites"))
   { // don't draw on side views
     glsl_SetActiveShader(sh_main);
     R_DrawPlayerSprites();

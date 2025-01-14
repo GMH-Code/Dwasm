@@ -51,6 +51,7 @@
 #include "hu_stuff.h"
 #include "lprintf.h"
 #include "e6y.h"//e6y
+#include "c_cvar.h"
 
 static mobj_t *current_actor;
 
@@ -151,7 +152,14 @@ static dboolean P_CheckMeleeRange(mobj_t *actor)
      (compatibility_level == doom_12_compatibility ?
       MELEERANGE :
       MELEERANGE - 20*FRACUNIT + pl->info->radius)) &&
-    P_CheckSight(actor, actor->target);
+    P_CheckSight(actor, actor->target) &&
+    /* melee height check */
+    (!C_CvarIsSet("overunder") ||
+     (
+      pl->z <= actor->z + actor->height &&
+      actor->z <= pl->z + pl->height
+     )
+    );
 }
 
 //
@@ -921,6 +929,18 @@ static dboolean P_LookForMonsters(mobj_t *actor, dboolean allaround)
 
       current_actor = actor;
       current_allaround = allaround;
+
+      // credit - from dsda-doom
+      // https://github.com/kraflab/dsda-doom/commit/dc29f0ce801f6ff910ae3fc3e6b1210ac79e87cf
+      // There is a bug in cl11+ that causes the player to get added
+      //   to the monster friend list when damaged to below 50% health.
+      // This causes all monsters to believe friend monsters exist.
+      // The search algorithm is expensive and massively so on maps with many monsters.
+      // We still need to match rng calls for demo sync, but PIT_FindTarget is a no op.
+      if (((mobj_t *) cap->cnext)->player && cap->cnext == cap->cprev) {
+          P_Random(pr_friends);
+          return false;
+      }
 
       // Search first in the immediate vicinity.
 

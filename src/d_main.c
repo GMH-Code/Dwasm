@@ -86,6 +86,9 @@
 #include "am_map.h"
 #include "umapinfo.h"
 #include "statdump.h"
+#include "zip/zip.h"
+#include "md5.h"
+#include "c_cmd.h"
 
 //e6y
 #include "r_demo.h"
@@ -134,6 +137,8 @@ dboolean umapinfo_loaded;
 extern dboolean inhelpscreens;
 extern dboolean BorderNeedRefresh;
 
+extern int fps_limit;
+
 skill_t startskill;
 int     startepisode;
 int     startmap;
@@ -170,6 +175,75 @@ const char *const standard_iwads[]=
 };
 //e6y static 
 const int nstandard_iwads = sizeof standard_iwads/sizeof*standard_iwads;
+
+char* savegame_wadlist = NULL;
+unsigned char wadlist_digest[16];
+
+const unsigned char* D_CalculateLoadedWADContentMD5()
+{
+    static dboolean initialized = false;
+    if (!initialized) {
+        struct MD5Context wads_md5;
+        memset(&wads_md5, 0, sizeof(struct MD5Context));
+        free(savegame_wadlist);
+        savegame_wadlist = malloc(sizeof(char));
+        int wadlen = 0;
+        savegame_wadlist[0] = '\0';
+        MD5Init(&wads_md5);
+        for (int j = 0; j < numwadfiles; j++) {
+            /* ignore GWA files */
+            if (stricmp(strrchr(wadfiles[j].name,'.'), ".gwa")) {
+                char* wad = strdup(BaseName(wadfiles[j].name));
+                for (int k = 0; k < strlen(wad); k++) {
+                    wad[k] = tolower(wad[k]);
+                }
+                wadlen += strlen(wad) + 1;
+                savegame_wadlist = realloc(savegame_wadlist, sizeof(char)*(wadlen + 1));
+                strcat(savegame_wadlist, wad);
+                savegame_wadlist[wadlen-1] = '\n';
+                savegame_wadlist[wadlen] = '\0';
+                MD5Update(&wads_md5, (md5byte const *)wad, strlen(wad));
+                free(wad);
+            }
+        }
+        MD5Final(wadlist_digest, &wads_md5);
+        initialized = true;
+    }
+    return wadlist_digest;
+}
+
+void D_AdjustSaveLocation()
+{
+    static char* base_folder = 0;
+
+    if (!base_folder) {
+        base_folder = strdup(basesavegame);
+    }
+
+    if (organize_saves) {
+        D_CalculateLoadedWADContentMD5();
+        /* append the digest to the base save game folder */
+        char* newsavedir = (char*) malloc(strlen(basesavegame) + sizeof(wadlist_digest) + 2);
+        strcpy(newsavedir, basesavegame);
+        if (!HasTrailingSlash(newsavedir)) {
+            strcat(newsavedir, "/");
+        }
+
+        int wrptr = strlen(newsavedir);
+        char b[3];
+        for (int i = 0; i < 16; i++) {
+            snprintf(b, sizeof(b), "%02X",wadlist_digest[i]);
+            strcat(newsavedir, b);
+        }
+
+        if (basesavegame != base_folder)
+            free(basesavegame);
+
+        basesavegame = newsavedir;
+    } else {
+        basesavegame = base_folder;
+    }
+}
 
 /*
  * D_PostEvent - Event handling
@@ -215,7 +289,8 @@ void D_PostEvent(event_t *ev)
 	  (gamestate == GS_LEVEL && (
 				     HU_Responder(ev) ||
 				     ST_Responder(ev) ||
-				     AM_Responder(ev)
+				     AM_Responder(ev) ||
+                     C_Responder(ev)
 				     )
 	  ) ||
 	G_Responder(ev);
@@ -413,7 +488,7 @@ void D_Display (fixed_t frac)
   oldgamestate = wipegamestate = gamestate;
 
   // draw pause pic
-  if (paused && (menuactive != mnact_full)) {
+  if (paused && (menuactive != mnact_full) && !console_on) {
     // Simplified the "logic" here and no need for x-coord caching - POPE
     V_DrawNamePatch((320 - V_NamePatchWidth("M_PAUSE"))/2, 4,
                     0, "M_PAUSE", CR_DEFAULT, VPT_STRETCH);
@@ -442,6 +517,22 @@ void D_Display (fixed_t frac)
   // Don't thrash cpu during pausing or if the window doesnt have focus
   if ( (paused && !walkcamera.type) || (!window_focused) ) {
     I_uSleep(5000);
+  }
+
+  /* delay to limit fps to desired amount */
+  if (movement_smooth && fps_limit) {
+      static int tick_a;
+      int tick_b = SDL_GetTicks();
+      if (tick_a == 0 || tick_b < tick_a) {
+          tick_a = SDL_GetTicks();
+      } else {
+          double frame_time = 1000000.0/((double) fps_limit);
+          int64_t wait_time = (int64_t)(frame_time - (1000.0)*(double)(tick_b - tick_a));
+          if (wait_time > 0 && wait_time < (int64_t)(frame_time)) {
+              I_uSleep(wait_time);
+          }
+          tick_a = SDL_GetTicks();
+      }
   }
 
   I_EndDisplay();
@@ -1618,6 +1709,19 @@ static void D_AutoloadDehPWadDir()
   }
 }
 
+static int D_ProcessZipExtractedFile(const char *filename, void *arg)
+{
+    char* suffix = strrchr(filename, '.');
+    if (suffix) {
+        if (0 == stricmp(suffix, ".wad")) {
+            D_AddFile(filename,source_pwad);
+        } else if (0 == stricmp(suffix, ".deh") || 0 == stricmp(suffix, ".bex")) {
+            ProcessDehFile(filename,D_dehout(),0);
+        }
+    }
+    return 0;
+}
+
 //
 // D_DoomMainSetup
 //
@@ -1865,9 +1969,6 @@ static void D_DoomMainSetup(void)
 
   // init subsystems
 
-  G_ReloadDefaults();    // killough 3/4/98: set defaults just loaded.
-  // jff 3/24/98 this sets startskill if it was -1
-
 #ifdef GL_DOOM
   // proff 04/05/2000: for GL-specific switches
   gld_InitCommandLine();
@@ -1935,10 +2036,50 @@ static void D_DoomMainSetup(void)
         {
           file = I_FindFile(myargv[p], ".wad");
         }
+        dboolean is_zip = (0 == stricmp(strrchr(file, '.'), ".zip"));
         if (file)
         {
-          D_AddFile(file,source_pwad);
-          free(file);
+            if (is_zip) {
+                const char* tmp_dir;
+                char* tmp_path = NULL;
+
+                tmp_dir = I_GetTempDir();
+                if (tmp_dir && *tmp_dir != '\0')
+                {
+                    const char* basefile = BaseName(file);
+                    int arg = 1;
+
+                    tmp_path = (char*) malloc(sizeof(char)*(strlen(tmp_dir) + strlen(basefile) + 2));
+
+                    strcpy(tmp_path, tmp_dir);
+
+                    if (!HasTrailingSlash(tmp_dir))
+                    {
+                        strcat(tmp_path, "/");
+                    }
+
+                    strcat(tmp_path, basefile);
+
+                    /* strip .zip */
+                    tmp_path[strlen(tmp_path)-4] = '\0';
+
+                    /* make a subfolder for this ZIP */
+                    if (M_access(tmp_path, W_OK) && -1 == M_mkdir(tmp_path)) {
+                        lprintf(LO_WARN, "Could not make temporary folder for zip extraction: %s not loaded\n", file);
+                    } else {
+                        zip_extract(file, tmp_path, D_ProcessZipExtractedFile, &arg);
+                    }
+
+                    free(tmp_path);
+                } else {
+                    lprintf(LO_WARN, "Could not extract zip to temporary folder (%s); %s not loaded.\n", tmp_dir, file);
+                }
+            } else {
+                /* normal WAD file add path */
+                D_AddFile(file,source_pwad);
+            }
+
+            free(file);
         }
       }
     }
@@ -2004,6 +2145,11 @@ static void D_DoomMainSetup(void)
   W_Init(); // CPhipps - handling of wadfiles init changed
 
   lprintf(LO_INFO,"\n");     // killough 3/6/98: add a newline, by popular demand :)
+
+  // Moved after WAD initialization for COMPLVL lump support
+  G_ReloadDefaults();    // killough 3/4/98: set defaults just loaded.
+  // jff 3/24/98 this sets startskill if it was -1
+
 
   // e6y 
   // option to disable automatic loading of dehacked-in-wad lump
@@ -2133,6 +2279,7 @@ static void D_DoomMainSetup(void)
 	  }
   }
 
+  D_AdjustSaveLocation();
 
   V_InitColorTranslation(); //jff 4/24/98 load color translation lumps
 
@@ -2252,6 +2399,9 @@ static void D_DoomMainSetup(void)
       G_CheckDemoContinue();
     }
 
+  /* initialize console and cvars before loading the map */
+  C_LoadSettings();
+
   if (slot && ++slot < myargc)
     {
       slot = atoi(myargv[slot]);        // killough 3/16/98: add slot info
@@ -2276,6 +2426,16 @@ static void D_DoomMainSetup(void)
 
   // do not try to interpolate during timedemo
   M_ChangeUncappedFrameRate();
+
+
+  /* if a timeline is available and valid,
+   * attempt to load it
+   */
+  if (!netgame && !demorecording && !demoplayback) {
+      if (autoload_timeline)
+          G_TimeWarpLoadTimelineAsFile(G_TimeWarpGenerateFilename(), false);
+      I_AtExit(G_AutoSaveTimeWarpTimelineOnExit, false);
+  }
 }
 
 //

@@ -47,7 +47,11 @@
 #define HU_HUDADDX_D (HU_HUDX_LL)
 #define HU_HUDADDY_D (HU_HUDY_LL+(-1)*HU_GAPY)
 
-#define STSTR_SECRETFOUND   "A secret is revealed!"
+#define STSTR_SECRETFOUND       "A secret is revealed!"
+#define STSTR_ALLSECRETFOUND    "All secrets found!"
+#define STSTR_ALLMONSTERSKILLED "All monsters killed!"
+#define STSTR_ALLITEMSFOUND     "All items found!"
+#define STSTR_ALL100P           "100\% MAX Achieved!"
 
 #define S_CANT_GL_ARB_MULTITEXTURE 0x10000000
 #define S_CANT_GL_ARB_MULTISAMPLEFACTOR  0x20000000
@@ -118,6 +122,9 @@ extern int hudadd_crosshair_health;
 extern int hudadd_crosshair_target;
 extern int hudadd_crosshair_target_color;
 extern int hudadd_crosshair_lock_target;
+extern int hudadd_announce_100p_secrets;
+extern int hudadd_announce_100p_items;
+extern int hudadd_announce_100p_kills;
 extern int movement_strafe50;
 extern int movement_shorttics;
 extern int movement_mouselook;

@@ -42,6 +42,7 @@
 
 int leveltime;
 
+dboolean freeze_mode = false;
 static dboolean newthinkerpresent;
 
 //
@@ -263,37 +264,64 @@ static void P_RunThinkers (void)
 
 void P_Ticker (void)
 {
-  int i;
+    int i;
 
-  /* pause if in menu and at least one tic has been run
-   *
-   * killough 9/29/98: note that this ties in with basetic,
-   * since G_Ticker does the pausing during recording or
-   * playback, and compenates by incrementing basetic.
-   *
-   * All of this complicated mess is used to preserve demo sync.
-   */
+    /* pause if in menu and at least one tic has been run
+     *
+     * killough 9/29/98: note that this ties in with basetic,
+     * since G_Ticker does the pausing during recording or
+     * playback, and compenates by incrementing basetic.
+     *
+     * All of this complicated mess is used to preserve demo sync.
+     */
 
-  if (paused || (menuactive && !demoplayback && !netgame &&
-     players[consoleplayer].viewz != 1))
-  {
-    P_ResetWalkcam();
-    return;
-  }
+    if (paused || (menuactive && !demoplayback && !netgame &&
+                players[consoleplayer].viewz != 1))
+    {
+        P_ResetWalkcam();
+        return;
+    }
 
-  R_UpdateInterpolations ();
+    R_UpdateInterpolations ();
 
-  P_MapStart();
-               // not if this is an intermission screen
-  if(gamestate==GS_LEVEL)
-  for (i=0; i<MAXPLAYERS; i++)
-    if (playeringame[i])
-      P_PlayerThink(&players[i]);
+    P_MapStart();
+    if (freeze_mode && gamestate==GS_LEVEL) {
+        thinker_t* th;
+        mobj_t* mo;
 
-  P_RunThinkers();
-  P_UpdateSpecials();
-  P_RespawnSpecials();
-  P_MapEnd();
-  leveltime++;                       // for par times
+        for (i=0; i<MAXPLAYERS; i++) {
+            if (playeringame[i]) {
+                P_PlayerThink(&players[i]);
+                P_MobjThinker(players[i].mo);
+            }
+        }
+
+        for (th = thinkercap.next; th != &thinkercap; th = th->next) {
+            if (th->function == P_MobjThinker) {
+                mo = (mobj_t *) th;
+
+                /* player thinkers were already run */
+                if (mo->player) {
+                    continue;
+                }
+
+                mo->PrevX = mo->x;
+                mo->PrevY = mo->y;
+                mo->PrevZ = mo->z;
+            }
+        }
+    } else {
+
+        // not if this is an intermission screen
+        if(gamestate==GS_LEVEL)
+            for (i=0; i<MAXPLAYERS; i++)
+                if (playeringame[i])
+                    P_PlayerThink(&players[i]);
+
+        P_RunThinkers();
+        P_UpdateSpecials();
+        P_RespawnSpecials();
+    }
+    P_MapEnd();
+    leveltime++;                       // for par times
 }
-

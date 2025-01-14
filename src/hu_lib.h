@@ -111,6 +111,7 @@ typedef struct
   int     nl;                          // height in lines
   int     nr;                          // total height in rows
   int     cl;                          // current line number
+  int     drawlines;                   // how many lines to draw
 
   int x,y,w,h;                         // window position and size
   const patchnum_t *bg;                  // patches for background
@@ -118,6 +119,7 @@ typedef struct
   // pointer to dboolean stating whether to update window
   dboolean*    on;
   dboolean   laston;             // last value of *->on.
+  dboolean   reversed;          // display in reverse order
 
 } hu_mtext_t;
 
@@ -198,8 +200,9 @@ void HUlib_eraseSText(hu_stext_t* s);
 
 //jff 2/26/98 message refresh widget
 // initialize refresh text widget
-void HUlib_initMText(hu_mtext_t *m, int x, int y, int w, int h, const patchnum_t* font,
-         int startchar, int cm, const patchnum_t* bgfont, enum patch_translation_e flags, dboolean *on);
+void HUlib_initMText(hu_mtext_t *m, int x, int y, int w, int h, int drawlines, const patchnum_t* font,
+         int startchar, int cm, const patchnum_t* bgfont, enum patch_translation_e flags, dboolean *on,
+         dboolean reversed);
 
 //jff 2/26/98 message refresh widget
 // add a text message to refresh text widget

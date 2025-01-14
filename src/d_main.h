@@ -78,10 +78,14 @@ void D_AddFile (const char *file, wad_source_t source);
 void AddIWAD(const char *iwad);
 const char *BaseName(const char *filename);
 
+void D_AdjustSaveLocation();
+const unsigned char* D_CalculateLoadedWADContentMD5();
+
 /* cph - MBF-like wad/deh/bex autoload code */
 /* proff 2001/7/1 - added prboom.wad as last entry so it's always loaded and
    doesn't overlap with the cfg settings */
 #define MAXLOADFILES 3
 extern const char *wad_files[MAXLOADFILES], *deh_files[MAXLOADFILES];
+extern char* savegame_wadlist;
 
 #endif

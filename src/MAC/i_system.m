@@ -56,7 +56,7 @@
 
 static NSString *libraryDir(void)
 {
-  return [@"~/Library/Application Support/PrBoom-Plus" stringByExpandingTildeInPath];
+  return [@"~/Library/Application Support/PrBoomX" stringByExpandingTildeInPath];
 }
 
 static char *NSStringToCString(NSString *str)

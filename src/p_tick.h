@@ -34,6 +34,7 @@
 #define __P_TICK__
 
 #include "d_think.h"
+#include "doomtype.h"
 
 #ifdef __GNUG__
 #pragma interface
@@ -72,4 +73,5 @@ extern thinker_t thinkerclasscap[];
 /* cph 2002/01/13 - iterator for thinker lists */
 thinker_t* P_NextThinker(thinker_t*,th_class);
 
+extern dboolean freeze_mode;
 #endif

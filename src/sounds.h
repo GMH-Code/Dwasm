@@ -297,6 +297,11 @@ typedef enum {
 
   //e6y
   sfx_secret,
+  // jds
+  sfx_secall,
+  sfx_itmall,
+  sfx_kilall,
+  sfx_maxall,
   sfx_gibdth,
   // Everything from here to 500 is reserved
 

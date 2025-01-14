@@ -433,9 +433,10 @@ void HUlib_eraseSText(hu_stext_t* s)
 // Passed a hu_mtext_t, and the values used to initialize
 // Returns nothing
 //
-void HUlib_initMText(hu_mtext_t *m, int x, int y, int w, int h,
+void HUlib_initMText(hu_mtext_t *m, int x, int y, int w, int h, int drawlines,
          const patchnum_t* font, int startchar, int cm,
-         const patchnum_t* bgfont, enum patch_translation_e flags, dboolean *on)
+         const patchnum_t* bgfont, enum patch_translation_e flags, dboolean *on,
+         dboolean reversed)
 {
   int i;
 
@@ -446,15 +447,17 @@ void HUlib_initMText(hu_mtext_t *m, int x, int y, int w, int h,
   m->y = y;
   m->w = w;
   m->h = h;
+  m->drawlines = drawlines;
   m->bg = bgfont;
   m->on = on;
+  m->reversed = reversed;
   for (i=0;i<HU_MAXMESSAGES;i++)
   {
     HUlib_initTextLine
     (
       &m->l[i],
       x,
-      y + (hud_list_bgon? i+1 : i)*HU_REFRESHSPACING,
+      y + ((console_on || hud_list_bgon)? i+1 : i)*HU_REFRESHSPACING,
       font,
       startchar,
       cm,
@@ -474,11 +477,11 @@ void HUlib_initMText(hu_mtext_t *m, int x, int y, int w, int h,
 static void HUlib_addLineToMText(hu_mtext_t* m)
 {
   // add a clear line
-  if (++m->cl == hud_msg_lines)
+  if (++m->cl == m->drawlines)
     m->cl = 0;
   HUlib_clearTextLine(&m->l[m->cl]);
 
-  if (m->nl<hud_msg_lines)
+  if (m->nl<m->drawlines)
     m->nl++;
 
   // needs updating
@@ -500,8 +503,14 @@ void HUlib_addMessageToMText(hu_mtext_t* m, const char* prefix, const char* msg)
     while (*prefix)
       HUlib_addCharToTextLine(&m->l[m->cl], *(prefix++));
 
-  while (*msg)
-    HUlib_addCharToTextLine(&m->l[m->cl], *(msg++));
+  while (*msg) {
+      if (*msg == '\n') {
+          HUlib_addCharToTextLine(&m->l[m->cl], ' ');
+          msg++;
+      } else {
+          HUlib_addCharToTextLine(&m->l[m->cl], *(msg++));
+      }
+  }
 }
 
 //
@@ -558,14 +567,16 @@ void HUlib_drawMBg
 //
 void HUlib_drawMText(hu_mtext_t* m)
 {
-  int i, idx, y;
+  int i, idx, y, yidx;
   hu_textline_t *l;
 
   if (!*m->on)
     return; // if not on, don't draw
 
   // draw everything
-  if (hud_list_bgon)
+  if (console_on)
+    HUlib_drawMBg(m->x,m->y,m->w,m->h+1,m->bg);
+  else if (hud_list_bgon)
     HUlib_drawMBg(m->x,m->y,m->w,m->h,m->bg);
   y = m->y + HU_REFRESHSPACING;
   for (i=0 ; i<m->nl ; i++)
@@ -575,15 +586,16 @@ void HUlib_drawMText(hu_mtext_t* m)
       idx += m->nl; // handle queue of lines
 
     l = &m->l[idx];
-    if (hud_list_bgon)
+    yidx = m->reversed ? m->drawlines - i - 1 : i;
+    if (console_on || hud_list_bgon)
     {
       l->x = m->x + 4;
-      l->y = m->y + (i+1)*HU_REFRESHSPACING;
+      l->y = m->y + ((yidx)+1)*HU_REFRESHSPACING;
     }
     else
     {
       l->x = m->x;
-      l->y = m->y + i*HU_REFRESHSPACING;
+      l->y = m->y + (yidx)*HU_REFRESHSPACING;
     }
 
     // need a decision made here on whether to skip the draw
@@ -611,7 +623,7 @@ static void HUlib_eraseMBg(hu_mtext_t* m)
   if (!(automapmode & am_active) && viewwindowx)
   {
     lh = m->l[0].f[0].height + 1;
-    for (y=m->y; y<m->y+lh*(hud_msg_lines+2) ; y++)
+    for (y=m->y; y<m->y+lh*(m->drawlines+2) ; y++)
     {
       if (y < viewwindowy || y >= viewwindowy + viewheight)
         R_VideoErase(0, y, SCREENWIDTH); // erase entire line
@@ -639,7 +651,7 @@ void HUlib_eraseMText(hu_mtext_t* m)
 {
   int i;
 
-  if (hud_list_bgon)
+  if (console_on || hud_list_bgon)
     HUlib_eraseMBg(m);
 
   for (i=0 ; i< m->nl ; i++)

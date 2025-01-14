@@ -138,6 +138,10 @@ int hudadd_crosshair_health;
 int hudadd_crosshair_target;
 int hudadd_crosshair_target_color;
 int hudadd_crosshair_lock_target;
+int hudadd_announce_100p_secrets;
+int hudadd_announce_100p_items;
+int hudadd_announce_100p_kills;
+int hudadd_secretarea;
 int movement_strafe50;
 int movement_shorttics;
 int movement_mouselook;
@@ -166,6 +170,7 @@ float mouse_accelfactor;
 
 camera_t walkcamera;
 
+hu_textline_t  w_hudfps;
 hu_textline_t  w_hudadd;
 hu_textline_t  w_centermsg;
 hu_textline_t  w_precache;

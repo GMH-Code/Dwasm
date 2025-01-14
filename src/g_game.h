@@ -54,7 +54,7 @@ void G_DeferedPlayDemo(const char *demo); // CPhipps - const
 void G_LoadGame(int slot, dboolean is_command); // killough 5/15/98
 void G_ForcedLoadGame(void);           // killough 5/15/98: forced loadgames
 void G_DoLoadGame(void);
-void G_SaveGame(int slot, char *description); // Called by M_Responder.
+void G_SaveGame(int slot, char *description, dboolean immediate); // Called by M_Responder.
 void G_BeginRecording(void);
 // CPhipps - const on these string params
 void G_RecordDemo(const char *name);          // Only called by startup code.
@@ -85,6 +85,17 @@ void G_BuildTiccmd (ticcmd_t* cmd); // CPhipps - move decl to header
 void G_ChangedPlayerColour(int pn, int cl); // CPhipps - On-the-fly player colour changing
 void G_MakeSpecialEvent(buttoncode_t bc, ...); /* cph - new event stuff */
 int G_ValidateMapName(const char *mapname, int *pEpi, int *pMap);
+
+// jds - achievement tracking
+dboolean G_Check100pAchieved();
+
+// jds - time warping
+void G_TimeWarpForward();
+void G_TimeWarpBackward();
+dboolean G_TimeWarpSaveTimelineAsFile(const char* filename);
+dboolean G_TimeWarpLoadTimelineAsFile(const char* filename, dboolean jump_to_tail);
+const char* G_TimeWarpGenerateFilename();
+void G_AutoSaveTimeWarpTimelineOnExit();
 
 //e6y
 extern dboolean democontinue;
@@ -136,6 +147,10 @@ extern int  key_reverse;
 extern int  key_zoomin;
 extern int  key_zoomout;
 extern int  key_chat;
+extern int  key_console;
+extern int  key_console_complete;
+extern int  key_console_history_up;
+extern int  key_console_history_down;
 extern int  key_backspace;
 extern int  key_enter;
 extern int  key_help;
@@ -191,6 +206,7 @@ extern int  key_map_grid;                                           // phares
 extern int  key_map_rotate; // cph - map rotation
 extern int  key_map_overlay;// cph - map overlay
 extern int  key_map_textured;  //e6y: textured automap
+extern int  key_map_magicsector;
 extern int  key_screenshot;    // killough 2/22/98 -- add key for screenshot
 extern int  autorun;           // always running?                   // phares
 extern int  mousebfire;
@@ -211,11 +227,21 @@ extern int  joybnextweapon;
 extern int  joybprevweapon;
 extern int  joybtncount;
 
+extern int  key_timewarp_forward;
+extern int  key_timewarp_backward;
+
 extern int  defaultskill;      //jff 3/24/98 default skill
 extern dboolean haswolflevels;  //jff 4/18/98 wolf levels present
 extern dboolean secretexit;
 
 extern int  bodyquesize;       // killough 2/8/98: adustable corpse limit
+
+extern dboolean organize_saves;
+extern dboolean skip_quicksaveload_confirmation;
+extern dboolean no_save_message;
+extern dboolean enable_time_warping;
+extern dboolean autoload_timeline;
+extern dboolean autosave_timeline_on_exit;
 
 // killough 5/2/98: moved from d_deh.c:
 // Par times (new item with BOOM) - from g_game.c

@@ -47,6 +47,7 @@
 #include "g_game.h"
 #include "lprintf.h"
 #include "e6y.h"//e6y
+#include "c_cvar.h"
 
 #define LOWERSPEED   (FRACUNIT*6)
 #define RAISESPEED   (FRACUNIT*6)
@@ -356,8 +357,8 @@ void A_WeaponReady(player_t *player, pspdef_t *psp)
 
   if (player->cmd.buttons & BT_ATTACK)
     {
-      if (!player->attackdown || (player->readyweapon != wp_missile &&
-                                  player->readyweapon != wp_bfg))
+      if (!player->attackdown || ((player->readyweapon != wp_missile || C_CvarIsSet("autofire_rocketlauncher")) &&
+                                  (player->readyweapon != wp_bfg || C_CvarIsSet("autofire_bfg"))))
         {
           player->attackdown = true;
           P_FireWeapon(player);

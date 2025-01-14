@@ -62,6 +62,10 @@ int /*comperr[COMPERR_NUM], */default_comperr[COMPERR_NUM];
 // [FG] allow MBF sky transfers in all complevels
 int comp_skytransfers;
 
+// Fix blockmap bug where objects don't extend into nearby
+// blockmap chunks despite their bounding box being inside
+int comp_fix_blockmap;
+
 // v1.1-like pitched sounds
 int pitched_sounds;        // killough
 

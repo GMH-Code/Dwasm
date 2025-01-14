@@ -141,6 +141,8 @@ extern int /*comperr[COMPERR_NUM], */default_comperr[COMPERR_NUM];
 // [FG] allow MBF sky transfers in all complevels
 extern int comp_skytransfers;
 
+extern int comp_fix_blockmap;
+
 // -------------------------------------------
 // Language.
 extern  Language_t   language;

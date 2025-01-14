@@ -50,6 +50,7 @@
 #include "g_overflow.h"
 #include "hu_tracers.h"
 #include "e6y.h"//e6y
+#include "c_cvar.h"
 
 static mobj_t    *tmthing;
 static fixed_t   tmx;
@@ -651,6 +652,22 @@ static dboolean PIT_CheckThing(mobj_t *thing) // killough 3/26/98: make static
   P_TouchSpecialThing(thing, tmthing); // can remove thing
       return !solid;
     }
+
+  // [Adapted from Nugget Doom] Allow things to move over/under solid things
+  if (C_CvarIsSet("overunder") && (thing->flags & MF_SOLID)) {
+    if (tmthing->z >= thing->z + thing->height) { // Over
+      tmfloorz = MAX(thing->z + thing->height, tmfloorz);
+      thing->ceilingz = MIN(tmthing->z, thing->ceilingz);
+
+      return true;
+    }
+    else if (tmthing->z + tmthing->height <= thing->z) { // Under
+      tmceilingz = MIN(thing->z, tmceilingz);
+      thing->floorz = MAX(tmthing->z + tmthing->height, thing->floorz);
+
+      return true;
+    }
+  }
 
   // RjY
   // comperr_hangsolid, an attempt to handle blocking hanging bodies
@@ -1843,6 +1860,7 @@ void P_UseLines (player_t*  player)
   x2 = x1 + (USERANGE>>FRACBITS)*finecosine[angle];
   y2 = y1 + (USERANGE>>FRACBITS)*finesine[angle];
 
+
   // old code:
   //
   // P_PathTraverse ( x1, y1, x2, y2, PT_ADDLINES, PTR_UseTraverse );
@@ -1852,6 +1870,23 @@ void P_UseLines (player_t*  player)
   if (P_PathTraverse ( x1, y1, x2, y2, PT_ADDLINES, PTR_UseTraverse ))
     if (!default_comp[comp_sound] && !P_PathTraverse ( x1, y1, x2, y2, PT_ADDLINES, PTR_NoWayTraverse ))
       S_StartSound (usething, sfx_noway);
+
+  /* JDS: check if we have plat-raise on space */
+  if (C_CvarIsSet("plat_skip")) {
+      struct msecnode_s* ts = player->mo->touching_sectorlist;
+      sector_t* s = ts->m_sector;
+      while (s) {
+          floormove_t* ss = s->floordata;
+          if (ss && ss->thinker.function == T_PlatRaise) {
+              plat_t* p = (plat_t*)ss;
+              if (p) p->count = 1;
+          }
+
+          ts = ts->m_snext;
+          if (ts) s = ts->m_sector;
+          else s = NULL;
+      }
+  }
 }
 
 

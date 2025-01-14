@@ -310,7 +310,7 @@ static DWORD L_Associate(const char *Name, const char *Ext, const char *cmdline)
   // This creates a Root entry called 'Name'
   result = RegCreateKey(hKeyRoot, Name, &hKey);
   if (result != ERROR_SUCCESS) return result;
-  result = RegSetValue(hKey, "", REG_SZ, "PrBoom-Plus", 0);
+  result = RegSetValue(hKey, "", REG_SZ, "PrBoomX", 0);
   if (result != ERROR_SUCCESS) return result;
   RegCloseKey(hKey);
 

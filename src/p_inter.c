@@ -41,6 +41,10 @@
 #include "d_deh.h"  // Ty 03/22/98 - externalized strings
 #include "p_tick.h"
 #include "lprintf.h"
+#include "c_cvar.h"
+#include "hu_stuff.h"
+#include "i_sound.h"
+#include "g_game.h"
 
 #include "p_inter.h"
 #include "p_enemy.h"
@@ -53,6 +57,8 @@
 #include "e6y.h"//e6y
 
 #define BONUSADD        6
+
+extern dboolean is_buddha();
 
 // Ty 03/07/98 - add deh externals
 // Maximums and such were hardcoded values.  Need to externalize those for
@@ -279,7 +285,7 @@ dboolean P_GivePower(player_t *player, int power)
         player->mo->flags |= MF_SHADOW;
         break;
       case pw_allmap:
-        if (player->powers[pw_allmap])
+        if (player->powers[pw_allmap] && !C_CvarIsSet("allmap_always"))
           return false;
         break;
       case pw_strength:
@@ -629,8 +635,22 @@ void P_TouchSpecialThing(mobj_t *special, mobj_t *toucher)
       I_Error ("P_SpecialThing: Unknown gettable thing");
     }
 
-  if (special->flags & MF_COUNTITEM)
+  if (special->flags & MF_COUNTITEM) {
     player->itemcount++;
+    if (hudadd_announce_100p_items || C_CvarIsSet("announce_100p_max")) {
+      unsigned int i;
+      unsigned int playeritems = 0;
+      for (i = 0; i<MAXPLAYERS; i++) {
+          if (playeringame[i]) {
+              playeritems += players[i].itemcount;
+          }
+      }
+      if (playeritems == totalitems && !G_Check100pAchieved() && hudadd_announce_100p_items) {
+          int sfx_id = (I_GetSfxLumpNum(&S_sfx[sfx_itmall]) < 0 ? sfx_itmbk : sfx_itmall);
+          SetCustomMessage(consoleplayer, STSTR_ALLITEMSFOUND, 0, 2 * TICRATE, CR_BLUE2, sfx_id);
+      }
+    }
+  }
   P_RemoveMobj (special);
   player->bonuscount += BONUSADD;
 
@@ -802,6 +822,23 @@ static void P_KillMobj(mobj_t *source, mobj_t *target)
   if (target->tics < 1)
     target->tics = 1;
 
+  // check kill count vs. map totals
+  if ((hudadd_announce_100p_kills || C_CvarIsSet("announce_100p_max")) &&
+          (target->flags & MF_COUNTKILL) && !(target->flags & MF_RESSURECTED))
+  {
+      unsigned int player;
+      unsigned int playerkills = 0;
+      for (player = 0; player<MAXPLAYERS; player++) {
+          if (playeringame[player]) {
+              playerkills += (players[player].killcount - players[player].resurectedkillcount);
+          }
+      }
+      if (playerkills == totalkills && !G_Check100pAchieved() && hudadd_announce_100p_kills) {
+          int sfx_id = (I_GetSfxLumpNum(&S_sfx[sfx_kilall]) < 0 ? sfx_itmbk : sfx_kilall);
+          SetCustomMessage(consoleplayer, STSTR_ALLMONSTERSKILLED, 0, 2 * TICRATE, CR_RED, sfx_id);
+      }
+  }
+
   // In Chex Quest, monsters don't drop items.
   if (gamemission == chex)
   {
@@ -937,11 +974,59 @@ void P_DamageMobj(mobj_t *target,mobj_t *inflictor, mobj_t *source, int damage)
 
   // do the damage
   target->health -= damage;
+
+  if (is_buddha() &&
+          (
+           (player && player->health <= 0)
+            ||
+           (target->type == MT_PLAYER && target->health <= 0)
+          )
+     ) {
+      player->health = 1;
+      player->mo->health = 1;
+      switch( rand() % 10 ) {
+          case 9:
+              player->message = "You shrug off mortal damage.";
+              break;
+          case 8:
+              player->message = "Your life force is drained, but returns!";
+              break;
+          case 7:
+              player->message = "You roll a natural 20 and escape death!";
+              break;
+          case 6:
+              player->message = "Your death is avoided.";
+              break;
+          case 5:
+              player->message = "You will pay for your sins, but not today!";
+              break;
+          case 4:
+              player->message = "A calm wind wafts the fatal damage away.";
+              break;
+          case 3:
+              player->message = "A distant bell awakens you. You live!";
+              break;
+          case 2:
+              player->message = "Death has not won this day!";
+              break;
+          case 1:
+              player->message = "Your mortality is a distant memory.";
+              break;
+          case 0:
+              player->message = "You escape punishment. Your enemies fume!";
+              break;
+          default:
+              player->message = "A programming error saves you!";
+              break;
+      }
+      return;
+  }
+
   if (target->health <= 0)
-    {
+  {
       P_KillMobj (source, target);
       return;
-    }
+  }
 
   // killough 9/7/98: keep track of targets so that friends can help friends
   if (mbf_features)

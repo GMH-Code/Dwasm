@@ -898,6 +898,7 @@ static void P_LoadSectors (int lump)
       ss->tag = LittleShort(ms->tag);
       ss->thinglist = NULL;
       ss->touching_thinglist = NULL;            // phares 3/14/98
+      ss->lines = NULL;
 
       ss->nextsec = -1; //jff 2/26/98 add fields to support locking out
       ss->prevsec = -1; // stair retriggering until build completes

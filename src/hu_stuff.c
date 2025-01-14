@@ -53,6 +53,9 @@
 #include "lprintf.h"
 #include "e6y.h" //e6y
 #include "g_overflow.h"
+#include "m_cheat.h"
+#include "c_cmd.h"
+#include "c_cvar.h"
 
 // global heads up display controls
 
@@ -76,6 +79,9 @@ int hud_num;
 // proff - changed to 200-ST_HEIGHT for stretching
 #define HU_TITLEY ((200-ST_HEIGHT) - 1 - hu_font[0].height)
 
+#define HU_FPSX (320 - 8*hu_font2['A'-HU_FONTSTART].width)
+#define HU_FPSY (1 * hu_font['A'-HU_FONTSTART].height + 1)
+
 //jff 2/16/98 add coord text widget coordinates
 // proff - changed to SCREENWIDTH to 320 for stretching
 #define HU_COORDX (320 - 13*hu_font2['A'-HU_FONTSTART].width)
@@ -98,6 +104,10 @@ int hud_num;
 
 #define HU_INPUTX HU_MSGX
 #define HU_INPUTY (HU_MSGY + HU_MSGHEIGHT*(hu_font[0].height) +1)
+
+#define HU_CONSOLEX HU_MSGX+(hu_font[0].width)
+#define HU_CONSOLE_MESSAGE_COUNT (9)
+#define HU_CONSOLEY (HU_MSGY + (HU_CONSOLE_MESSAGE_COUNT+1)*(HU_MSGHEIGHT*(hu_font[0].height)+1))
 
 #define HU_TRACERX (2)
 #define HU_TRACERY (hu_font['A'-HU_FONTSTART].height)
@@ -145,9 +155,10 @@ patchnum_t hu_msgbg[9];          //jff 2/26/98 add patches for message backgroun
 patchnum_t hu_font_hud[HU_FONTSIZE];
 
 // widgets
-static hu_textline_t  w_title;
+       hu_textline_t  w_title;
 static hu_stext_t     w_message;
 static hu_itext_t     w_chat;
+static hu_itext_t     w_console;
 static hu_itext_t     w_inputbuffer[MAXPLAYERS];
 static hu_textline_t  w_coordx; //jff 2/16/98 new coord widget for automap
 static hu_textline_t  w_coordy; //jff 3/3/98 split coord widgets automap
@@ -159,7 +170,9 @@ static hu_textline_t  w_weapon; //jff 2/16/98 new weapon widget for hud
 static hu_textline_t  w_keys;   //jff 2/16/98 new keys widget for hud
 static hu_textline_t  w_gkeys;  //jff 3/7/98 graphic keys widget for hud
 static hu_textline_t  w_monsec; //jff 2/16/98 new kill/secret widget for hud
+static hu_textline_t  w_hudfps; //jds hud fps widget
 static hu_mtext_t     w_rtext;  //jff 2/26/98 text message refresh widget
+static hu_mtext_t     w_consoletext;  //jds console message widget
 
 static hu_textline_t  w_map_monsters;  //e6y monsters widget for automap
 static hu_textline_t  w_map_secrets;   //e6y secrets widgets automap
@@ -184,6 +197,7 @@ static hu_textline_t  w_keys_icon;
 static dboolean    always_off = false;
 static char       chat_dest[MAXPLAYERS];
 dboolean           chat_on;
+dboolean           console_on;
 static dboolean    message_on;
 static dboolean    message_list; //2/26/98 enable showing list of messages
 dboolean           message_dontfuckwithme;
@@ -201,6 +215,7 @@ int hudcolor_mapstat_time;
 //jff 2/16/98 hud text colors, controls added
 int hudcolor_mesg;  // color range of scrolling messages
 int hudcolor_chat;  // color range of chat lines
+int hudcolor_console;  // color range of console lines
 int hud_msg_lines;  // number of message lines in window
 //jff 2/26/98 hud text colors, controls added
 int hudcolor_list;  // list of messages color
@@ -451,9 +466,9 @@ static void HU_Stop(void)
 // Passed nothing, returns nothing
 //
 void HU_Start(void)
-{
-  int   i;
+{ int   i;
   const char* s; /* cph - const */
+  static dboolean console_initialized = false;
 
   if (headsupactive)                    // stop before starting
     HU_Stop();
@@ -464,6 +479,7 @@ void HU_Start(void)
   message_dontfuckwithme = false;
   message_nottobefuckedwith = false;
   chat_on = false;
+  console_on = false;
 
   // create the message widget
   // messages to player in upper-left of screen
@@ -666,6 +682,16 @@ void HU_Start(void)
 
   HUlib_initTextLine
   (
+    &w_hudfps,
+    0, 0,
+    hu_font2,
+    HU_FONTSTART,
+    CR_GRAY,
+    VPT_NONE
+  );
+
+  HUlib_initTextLine
+  (
     &w_medict_percent,
     0, 0,
     hu_font_hud,
@@ -729,13 +755,35 @@ void HU_Start(void)
     320,
 //    SCREENWIDTH,
     (hud_msg_lines+2)*HU_REFRESHSPACING,
+    hud_msg_lines,
     hu_font,
     HU_FONTSTART,
     hudcolor_list,
     hu_msgbg,
     VPT_ALIGN_LEFT_TOP,
-    &message_list
+    &message_list,
+    false
   );
+
+  if (!console_initialized) {
+      console_initialized = true;
+      HUlib_initMText
+          (
+           &w_consoletext,
+           0,
+           0,
+           320,
+           (HU_CONSOLE_MESSAGE_COUNT+2)*HU_REFRESHSPACING,
+           HU_CONSOLE_MESSAGE_COUNT,
+           hu_font,
+           HU_FONTSTART,
+           hudcolor_list,
+           hu_msgbg,
+           VPT_STRETCH,
+           &console_on,
+           true
+          );
+  }
 
   if (gamemapinfo && gamemapinfo->levelname)
   {
@@ -912,6 +960,7 @@ void HU_Start(void)
   while (*s)
     HUlib_addCharToTextLine(&w_hudadd, *(s++));
 
+
   for(i = 0; i < NUMTRACES; i++)
   {
     HUlib_initTextLine(
@@ -966,6 +1015,20 @@ void HU_Start(void)
     VPT_NONE,
     &chat_on
   );
+
+  // create the console widget
+  HUlib_initIText
+  (
+    &w_console,
+    HU_CONSOLEX,
+    HU_CONSOLEY,
+    hu_font,
+    HU_FONTSTART,
+    hudcolor_console,
+    VPT_STRETCH,
+    &console_on
+  );
+
 
   // create the inputbuffer widgets, one per player
   for (i=0 ; i<MAXPLAYERS ; i++)
@@ -1036,8 +1099,10 @@ void HU_widget_build_weapon(void);
 void HU_widget_draw_weapon(void);
 void HU_widget_build_keys(void);
 void HU_widget_draw_keys(void);
+void HU_widget_build_fps(void);
 void HU_widget_build_monsec(void);
 void HU_widget_draw_monsec(void);
+void HU_widget_draw_fps(void);
 void HU_widget_build_health(void);
 void HU_widget_draw_health(void);
 void HU_widget_build_armor(void);
@@ -1096,6 +1161,7 @@ static hud_widget_t hud_name_widget[] =
   {&w_health, 0, 0, 0, HU_widget_build_health, HU_widget_draw_health, "health"},
   {&w_armor,  0, 0, 0, HU_widget_build_armor,  HU_widget_draw_armor,  "armor"},
   {&w_hudadd, 0, 0, 0, HU_widget_build_hudadd, HU_widget_draw_hudadd, "hudadd"},
+  {&w_hudfps, 0, 0, 0, HU_widget_build_fps,    HU_widget_draw_fps,    "fps"},
 
   {&w_keys_icon, 0, 0, 0, HU_widget_build_gkeys, HU_widget_draw_gkeys, "gkeys"},
 
@@ -1250,6 +1316,10 @@ void HU_MoveHud(int force)
       w_monsec.x = HU_TITLEX;
       w_monsec.y = HU_TITLEY;
       w_monsec.flags = VPT_ALIGN_LEFT_BOTTOM;
+
+      w_hudfps.x = HU_FPSX;
+      w_hudfps.y = HU_FPSY;
+      w_hudfps.flags = VPT_ALIGN_RIGHT_TOP;
 
       ohud_num = -2;
     }
@@ -2035,6 +2105,25 @@ void HU_widget_build_monsec(void)
     HUlib_addCharToTextLine(&w_monsec, *(s++));
 }
 
+void HU_widget_build_fps(void)
+{
+  extern int renderer_fps;
+  char* s;
+  char* s_start;
+
+  if (!C_CvarIsSet("showfps"))
+    return;
+
+  s = malloc(sizeof(char)*32);
+  s_start = s;
+  s[0] = '\0';
+  snprintf(s, 32, "\x1b\x32" "fps \x1b\x33%.2d ", renderer_fps);
+  HUlib_clearTextLine(&w_hudfps);
+  while (*s)
+    HUlib_addCharToTextLine(&w_hudfps, *(s++));
+  free(s_start);
+}
+
 void HU_widget_draw_monsec(void)
 {
   HUlib_drawTextLine(&w_monsec, false);
@@ -2042,13 +2131,17 @@ void HU_widget_draw_monsec(void)
 
 void HU_widget_build_hudadd(void)
 {
+  extern int renderer_fps;
   char *s;
   hud_add[0] = 0;
 
-  if (!hudadd_gamespeed && !hudadd_leveltime)
+  if (!hudadd_gamespeed && !hudadd_leveltime &&
+          !C_CvarIsSet("hudadd_showfps"))
     return;
 
-  if (hudadd_gamespeed)
+  if (C_CvarIsSet("hudadd_showfps"))
+      sprintf(hud_add,"\x1b\x32" "fps \x1b\x33%.2d ", renderer_fps);
+  else if (hudadd_gamespeed)
     sprintf(hud_add,"\x1b\x32speed \x1b\x33%.2d ", realtic_clock_rate);
   if ((hudadd_leveltime) || (demoplayback && hudadd_demotime))
   {
@@ -2073,6 +2166,13 @@ void HU_widget_draw_hudadd(void)
   if (hudadd_gamespeed || hudadd_leveltime)
   {
     HUlib_drawTextLine(&w_hudadd, false);
+  }
+}
+
+void HU_widget_draw_fps(void)
+{
+  if (C_CvarIsSet("showfps")) {
+    HUlib_drawTextLine(&w_hudfps, false);
   }
 }
 
@@ -2574,6 +2674,9 @@ void HU_Drawer(void)
     HU_widget_draw_hudadd();
   }
 
+  if (realframe)
+      HU_widget_build_fps();
+  HU_widget_draw_fps();
   //jff 3/4/98 display last to give priority
   HU_Erase(); // jff 4/24/98 Erase current lines before drawing current
               // needed when screen not fullsize
@@ -2598,8 +2701,15 @@ void HU_Drawer(void)
   if (hud_msg_lines>1 && message_list)
     HUlib_drawMText(&w_rtext);
 
+
   // display the interactive buffer for chat entry
   HUlib_drawIText(&w_chat);
+
+  if (console_on) {
+    HUlib_drawMText(&w_consoletext);
+  }
+  // display the interactive buffer for console entry
+  HUlib_drawIText(&w_console);
 }
 
 //
@@ -2623,6 +2733,9 @@ void HU_Erase(void)
 
   // erase the interactive text buffer for chat entry
   HUlib_eraseIText(&w_chat);
+
+  // erase the text buffer for console entry
+  HUlib_eraseIText(&w_console);
 
   // erase the automap title
   HUlib_eraseTextLine(&w_title);
@@ -2651,7 +2764,22 @@ void HU_Ticker(void)
   }
   if (bsdown && bscounter++ > 9) {
     HUlib_keyInIText(&w_chat, (unsigned char)key_backspace);
+    HUlib_keyInIText(&w_console, (unsigned char)key_backspace);
     bscounter = 8;
+  }
+
+  if (plr->message) {
+      // Add messages to console log whether or not they're displayed
+      HUlib_addMessageToMText(&w_consoletext, 0, plr->message);
+      // Clear the message from multiposting if showMessages is off
+      if (!showMessages && !message_dontfuckwithme) {
+          plr->message = 0;
+      }
+  }
+
+  if (C_HasMessage()) {
+      HUlib_addMessageToMText(&w_consoletext, 0, C_GetMessage());
+      C_ClearMessage();
   }
 
   // if messages on, or "Messages Off" is being displayed
@@ -2679,7 +2807,7 @@ void HU_Ticker(void)
       message_dontfuckwithme = 0;
     }
   }
-  
+
   // centered messages
   for (i = 0; i < MAXPLAYERS; i++)
   {
@@ -2811,6 +2939,7 @@ dboolean HU_Responder(event_t *ev)
   const char*   macromessage; // CPhipps - const char*
   dboolean   eatkey = false;
   static dboolean  shiftdown = false;
+  static dboolean  ctrldown = false;
   static dboolean  altdown = false;
   unsigned char   c;
   int     i;
@@ -2832,6 +2961,11 @@ dboolean HU_Responder(event_t *ev)
     altdown = ev->type == ev_keydown;
     return false;
   }
+  else if (ev->data1 == KEYD_RCTRL)
+  {
+    ctrldown = ev->type == ev_keydown;
+    return false;
+  }
   else if (ev->data1 == key_backspace)
   {
     bsdown = ev->type == ev_keydown;
@@ -2843,7 +2977,7 @@ dboolean HU_Responder(event_t *ev)
 
   if (!chat_on)
   {
-    if (ev->data1 == key_enter)                                 // phares
+    if (!console_on && ev->data1 == key_enter)                                 // phares
     {
 #ifndef INSTRUMENTED  // never turn on message review if INSTRUMENTED defined
       if (hud_msg_lines>1)  // it posts multi-line messages that will trash
@@ -2899,9 +3033,59 @@ dboolean HU_Responder(event_t *ev)
         }
       }
     }
-    }
-  }//jff 2/26/98 no chat functions if message review is displayed
-  else if (!message_list)
+    } else if (!demorecording && !demoplayback && !netgame && (ev->data1 == key_console)) {
+        console_on ^= 1;
+        paused ^= 1;
+        HUlib_resetIText(&w_console);
+        C_ResetCommandHistoryPosition();
+        eatkey = true;
+    } else if (console_on) {
+      eatkey = true;
+      c = ev->data1;
+
+      if (shiftdown || (c >= 'a' && c <= 'z'))
+        c = shiftxform[c];
+
+      if (c == key_enter) {
+        console_on = false;
+        paused = false;
+
+        C_ConsoleCommand(w_console.l.l);
+        HUlib_resetIText(&w_console);
+      } else if (c == key_escape) {
+        console_on = false;
+        paused = false;
+      } else if (c == key_console_complete) {
+          const char* completion = C_CommandComplete(w_console.l.l);
+          if (completion) {
+              HUlib_resetIText(&w_console);
+              while (*completion) {
+                  HUlib_addCharToTextLine(&w_console.l, (char) *completion);
+                  completion++;
+              }
+          }
+      } else if (c == key_console_history_up || c == key_console_history_down) {
+          const char* cmd = C_NavigateCommandHistory((c == key_console_history_up ? -1 : 1));
+          if (cmd) {
+              HUlib_resetIText(&w_console);
+              while (*cmd) {
+                  HUlib_addCharToTextLine(&w_console.l, (char) *cmd);
+                  cmd++;
+              }
+          }
+      } else if (c == 'U' && ctrldown) {
+          /* special case for ctrl-u to erase line */
+          HUlib_resetIText(&w_console);
+      } else {
+          if (c >= ' ' && c <= '~') {
+              HUlib_addCharToTextLine(&w_console.l, (char) c);
+          } else if (c == key_backspace && w_console.l.len != w_console.lm && w_console.l.len > 0) {
+              w_console.l.l[--w_console.l.len] = 0;
+              w_console.l.needsupdate = 4;
+          }
+      }
+  } 
+  } else if (!message_list)
   {
     c = ev->data1;
     // send a macro

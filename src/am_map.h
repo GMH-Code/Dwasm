@@ -88,6 +88,10 @@ void AM_setMarkParams(int num);
 
 void AM_SetResolution(void);
 
+void AM_GetCrosshairPosition(fixed_t* x, fixed_t* y);
+
+void AM_SetCenterPosition(fixed_t* x, fixed_t* y);
+
 typedef struct
 {
  fixed_t x,y;
@@ -134,7 +138,11 @@ extern int mapcolor_item;     // item sprite color
 extern int mapcolor_enemy;    // enemy sprite color
 extern int mapcolor_frnd;     // friendly sprite color
 extern int mapcolor_hair;     // crosshair color
+extern int mapcolor_hai2;     // crosshair color
 extern int mapcolor_sngl;     // single player arrow color
+extern int mapcolor_exis;     // secret exit
+extern int mapcolor_asec;     // automap secret
+extern int mapcolor_secf;     // unfound secret sector boundary color
 extern int mapcolor_plyr[4];  // colors for players in multiplayer
 extern int mapcolor_me;       // consoleplayer's chosen colour
 //jff 3/9/98
@@ -150,6 +158,7 @@ extern int map_textured;
 extern int map_textured_trans;
 extern int map_textured_overlay_trans;
 extern int map_lines_overlay_trans;
+extern int map_enhanced_allmap;
 extern int map_overlay_pos_x;
 extern int map_overlay_pos_y;
 extern int map_overlay_pos_width;
@@ -186,4 +195,13 @@ typedef enum
 extern map_things_appearance_t map_things_appearance;
 extern const char *map_things_appearance_list[];
 
+
+typedef enum
+{
+  map_player_arrow_appearance_classic,
+  map_player_arrow_appearance_chevron,
+  map_player_arrow_appearance_max
+} map_player_arrow_appearance_t;
+extern map_player_arrow_appearance_t map_player_arrow_appearance;
+extern const char *map_player_arrow_appearance_list[];
 #endif

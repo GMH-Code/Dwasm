@@ -1,6 +1,6 @@
 # bash completion for PrBoom+                              -*- shell-script -*-
 
-_prboom_plus()
+_prboomX()
 {
     local cur prev words cword
     _init_completion || return
@@ -46,6 +46,6 @@ _prboom_plus()
     fi
 } &&
 
-complete -F _prboom_plus prboom-plus
+complete -F _prboomX prboomX
 
 # ex: ts=4 sw=4 et filetype=sh

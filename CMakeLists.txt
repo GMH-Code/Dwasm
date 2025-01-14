@@ -1,15 +1,8 @@
 cmake_minimum_required(VERSION 3.0)
 
-project("PrBoom-Plus"
-    VERSION 2.6.66
-    HOMEPAGE_URL "https://github.com/coelckers/prboom-plus")
-
-# The EMSCRIPTEN conditional is available after project configuration
-if(EMSCRIPTEN)
-    set(PROJECT_NAME "Dwasm")
-    set(PROJECT_VERSION 1.4.1)
-    set(PROJECT_HOMEPAGE_URL "https://github.com/GMH-Code/Dwasm")
-endif()
+project("Dwasm"
+    VERSION 2.0.0
+    HOMEPAGE_URL "https://github.com/GMH-Code/Dwasm")
 
 # Set a default build type if none was specified
 set(default_build_type "RelWithDebInfo")
@@ -32,7 +25,7 @@ if(NOT EMSCRIPTEN)
 endif()
 
 # Check if a CMAKE_INSTALL_DOCDIR is provided before GNUInstallDirs sets its
-# own default; this lets us set our own PrBoom-Plus default docdir later
+# own default; this lets us set our own PrBoomX default docdir later
 # without clobbering a user-configured one
 set(CUSTOM_DOCDIR "${CMAKE_INSTALL_DOCDIR}")
 include(GNUInstallDirs)
@@ -47,7 +40,7 @@ endif()
 set(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/../dependencies_${DEPENDENCY_SUFFIX}")
 
 set(PACKAGE_NAME "${PROJECT_NAME}")
-set(PACKAGE_TARNAME "prboom-plus")
+set(PACKAGE_TARNAME "prboomX")
 set(PACKAGE_VERSION "${PROJECT_VERSION}")
 set(PACKAGE_HOMEPAGE "${PROJECT_HOMEPAGE_URL}")
 set(PACKAGE_STRING "${PROJECT_NAME} ${PROJECT_VERSION}")
@@ -310,7 +303,7 @@ endif()
 
 set(PRBOOM_OUTPUT_PATH ${CMAKE_BINARY_DIR})
 
-set(WAD_DATA prboom-plus.wad)
+set(WAD_DATA prboomx.wad)
 set(WAD_DATA_PATH "${PRBOOM_OUTPUT_PATH}/${WAD_DATA}")
 
 if(NOT EMSCRIPTEN)

@@ -249,8 +249,6 @@ void M_FinishHelp(int choice);            // killough 10/98
 void M_LoadSelect(int choice);
 void M_SaveSelect(int choice);
 void M_ReadSaveStrings(void);
-void M_QuickSave(void);
-void M_QuickLoad(void);
 
 void M_DrawMainMenu(void);
 void M_DrawReadThis1(void);
@@ -1006,7 +1004,7 @@ void M_DrawSave(void)
 //
 static void M_DoSave(int slot)
 {
-  G_SaveGame (slot,savegamestrings[slot]);
+  G_SaveGame (slot,savegamestrings[slot], false);
   M_ClearMenus ();
 
   // PICK QUICKSAVE SLOT YET?
@@ -1220,7 +1218,7 @@ int quitsounds2[8] =
   sfx_sgtatk
 };
 
-static void M_QuitResponse(int ch)
+void M_QuitResponse(int ch)
 {
   if (ch != 'y')
     return;
@@ -1512,8 +1510,12 @@ void M_QuickSave(void)
     quickSaveSlot = -2; // means to pick a slot now
     return;
   }
-  sprintf(tempstring,s_QSPROMPT,savegamestrings[quickSaveSlot]); // Ty 03/27/98 - externalized
-  M_StartMessage(tempstring,M_QuickSaveResponse,true);
+  if (!skip_quicksaveload_confirmation) {
+      sprintf(tempstring,s_QSPROMPT,savegamestrings[quickSaveSlot]); // Ty 03/27/98 - externalized
+      M_StartMessage(tempstring,M_QuickSaveResponse,true);
+  } else {
+      M_QuickSaveResponse('y');
+  }
 }
 
 /////////////////////////////
@@ -1544,8 +1546,12 @@ void M_QuickLoad(void)
     M_StartMessage(s_QSAVESPOT,NULL,false); // Ty 03/27/98 - externalized
     return;
   }
-  sprintf(tempstring,s_QLPROMPT,savegamestrings[quickSaveSlot]); // Ty 03/27/98 - externalized
-  M_StartMessage(tempstring,M_QuickLoadResponse,true);
+  if (!skip_quicksaveload_confirmation) {
+      sprintf(tempstring,s_QLPROMPT,savegamestrings[quickSaveSlot]); // Ty 03/27/98 - externalized
+      M_StartMessage(tempstring,M_QuickLoadResponse,true);
+  } else {
+      M_QuickLoadResponse('y');
+  }
 }
 
 /////////////////////////////
@@ -2403,6 +2409,7 @@ static void M_DrawInstructions(void)
 // Definitions of the (in this case) four key binding screens.
 
 setup_menu_t keys_settings1[];
+setup_menu_t keys_settings_prboomx[];
 setup_menu_t keys_settings2[];
 setup_menu_t keys_settings3[];
 setup_menu_t keys_settings4[];
@@ -2415,6 +2422,7 @@ setup_menu_t keys_settings7[];
 setup_menu_t* keys_settings[] =
 {
   keys_settings1,
+  keys_settings_prboomx,
   keys_settings2,
   keys_settings3,
   keys_settings4,
@@ -2483,11 +2491,31 @@ setup_menu_t keys_settings1[] =  // Key Binding screen strings
   // Button for resetting to defaults
   {0,S_RESET,m_null,X_BUTTON,Y_BUTTON},
 
-  {"NEXT ->",S_SKIP|S_NEXT,m_null,KB_NEXT,KB_Y+20*8, {keys_settings2}},
+  {"NEXT ->",S_SKIP|S_NEXT,m_null,KB_NEXT,KB_Y+20*8, {keys_settings_prboomx}},
 
   // Final entry
   {0,S_SKIP|S_END,m_null}
 
+};
+
+setup_menu_t keys_settings_prboomx[] =  // Key Binding screen strings
+{
+    {"PRBOOMX"                   ,S_SKIP|S_TITLE,m_null,KB_X   ,KB_Y}     ,
+    {"CONSOLE"                   ,S_KEY         ,m_scrn,KB_X   ,KB_Y+1*8 ,{&key_console}}          ,
+    {"CONSOLE COMPLETION"        ,S_KEY         ,m_scrn,KB_X   ,KB_Y+2*8 ,{&key_console_complete}} ,
+    {"CONSOLE HISTORY UP"        ,S_KEY         ,m_scrn,KB_X   ,KB_Y+3*8 ,{&key_console_history_up}} ,
+    {"CONSOLE HISTORY DOWN"      ,S_KEY         ,m_scrn,KB_X   ,KB_Y+4*8 ,{&key_console_history_down}} ,
+    {"TIME WARP FORWARD"         ,S_KEY         ,m_scrn,KB_X   ,KB_Y+5*8 ,{&key_timewarp_forward}} ,
+    {"TIME WARP BACKWARD"        ,S_KEY         ,m_scrn,KB_X   ,KB_Y+6*8 ,{&key_timewarp_backward}},
+
+    {"TAG FINDER (automap)"      ,S_KEY         ,m_map ,KB_X   ,KB_Y+18*8,{&key_map_magicsector}}  ,
+
+    {"<- PREV"                   , S_SKIP|S_PREV,m_null,KB_PREV,KB_Y+20*8,{keys_settings1}}        ,
+    {"NEXT ->"                   , S_SKIP|S_NEXT,m_null,KB_NEXT,KB_Y+20*8,{keys_settings2}}        ,
+
+    // Final entry
+
+    {0,S_SKIP|S_END,m_null}
 };
 
 setup_menu_t keys_settings2[] =  // Key Binding screen strings
@@ -2525,7 +2553,8 @@ setup_menu_t keys_settings2[] =  // Key Binding screen strings
   {"QUICKLOAD"   ,S_KEY       ,m_scrn,KB_X,KB_Y+16*8,{&key_quickload}},
   {"END GAME"    ,S_KEY       ,m_scrn,KB_X,KB_Y+17*8,{&key_endgame}},
   {"QUIT"        ,S_KEY       ,m_scrn,KB_X,KB_Y+18*8,{&key_quit}},
-  {"<- PREV", S_SKIP|S_PREV,m_null,KB_PREV,KB_Y+20*8, {keys_settings1}},
+  {"CONSOLE"     ,S_KEY       ,m_scrn,KB_X,KB_Y+19*8,{&key_console}},
+  {"<- PREV", S_SKIP|S_PREV,m_null,KB_PREV,KB_Y+20*8, {keys_settings_prboomx}},
   {"NEXT ->", S_SKIP|S_NEXT,m_null,KB_NEXT,KB_Y+20*8, {keys_settings3}},
 
   // Final entry
@@ -2578,6 +2607,7 @@ setup_menu_t keys_settings4[] =  // Key Binding screen strings
 #ifdef GL_DOOM
   {"TEXTURED"   ,S_KEY       ,m_map ,KB_X,KB_Y+14*8,{&key_map_textured}},
 #endif
+  {"TAG FINDER"  ,S_KEY       ,m_map ,KB_X,KB_Y+15*8,{&key_map_magicsector}},
 
   {"<- PREV" ,S_SKIP|S_PREV,m_null,KB_PREV,KB_Y+20*8, {keys_settings3}},
   {"NEXT ->",S_SKIP|S_NEXT,m_null,KB_NEXT,KB_Y+20*8, {keys_settings5}},
@@ -2860,21 +2890,24 @@ setup_menu_t stat_settings2[] =
 {
   {"ADVANCED HUD SETTINGS"       ,S_SKIP|S_TITLE,m_null,ADVHUD_X,SB_Y+1*8},
   {"REPORT REVEALED SECRETS"     ,S_YESNO     ,m_null,ADVHUD_X,SB_Y+ 2*8, {"hudadd_secretarea"}},
-  {"SMART TOTALS"                ,S_YESNO     ,m_null,ADVHUD_X,SB_Y+ 3*8, {"hudadd_smarttotals"}},
-  {"SHOW GAMESPEED"              ,S_YESNO     ,m_null,ADVHUD_X,SB_Y+ 4*8, {"hudadd_gamespeed"}},
-  {"SHOW LEVELTIME"              ,S_YESNO     ,m_null,ADVHUD_X,SB_Y+ 5*8, {"hudadd_leveltime"}},
-  {"SHOW DEMOTIME"               ,S_YESNO     ,m_null,ADVHUD_X,SB_Y+ 6*8, {"hudadd_demotime"}},
-  {"SHOW PROGRESS BAR DURING DEMO PLAYBACK" ,S_YESNO     ,m_null,ADVHUD_X,SB_Y+ 7*8, {"hudadd_demoprogressbar"}},
-  {"SHOW TIME/STS ABOVE STATUS BAR" ,S_YESNO  ,m_null,ADVHUD_X,SB_Y+ 8*8, {"hudadd_timests"}},
+  {"REPORT 100% KILLS"           ,S_YESNO     ,m_null,ADVHUD_X,SB_Y+ 3*8, {"hudadd_announce_100p_kills"}},
+  {"REPORT 100% ITEMS"           ,S_YESNO     ,m_null,ADVHUD_X,SB_Y+ 4*8, {"hudadd_announce_100p_items"}},
+  {"REPORT 100% SECRETS"         ,S_YESNO     ,m_null,ADVHUD_X,SB_Y+ 5*8, {"hudadd_announce_100p_secrets"}},
+  {"SMART TOTALS"                ,S_YESNO     ,m_null,ADVHUD_X,SB_Y+ 6*8, {"hudadd_smarttotals"}},
+  {"SHOW GAMESPEED"              ,S_YESNO     ,m_null,ADVHUD_X,SB_Y+ 7*8, {"hudadd_gamespeed"}},
+  {"SHOW LEVELTIME"              ,S_YESNO     ,m_null,ADVHUD_X,SB_Y+ 8*8, {"hudadd_leveltime"}},
+  {"SHOW DEMOTIME"               ,S_YESNO     ,m_null,ADVHUD_X,SB_Y+ 9*8, {"hudadd_demotime"}},
+  {"SHOW PROGRESS BAR DURING DEMO PLAYBACK" ,S_YESNO     ,m_null,ADVHUD_X,SB_Y+ 10*8, {"hudadd_demoprogressbar"}},
+  {"SHOW TIME/STS ABOVE STATUS BAR" ,S_YESNO  ,m_null,ADVHUD_X,SB_Y+ 11*8, {"hudadd_timests"}},
 
-  {"CROSSHAIR SETTINGS"            ,S_SKIP|S_TITLE,m_null,ADVHUD_X,SB_Y+10*8},
-  {"ENABLE CROSSHAIR"              ,S_CHOICE   ,m_null,ADVHUD_X,SB_Y+11*8, {"hudadd_crosshair"}, 0, 0, 0, crosshair_str},
-  {"SCALE CROSSHAIR"               ,S_YESNO    ,m_null,ADVHUD_X,SB_Y+12*8, {"hudadd_crosshair_scale"}},
-  {"CHANGE CROSSHAIR COLOR BY PLAYER HEALTH" ,S_YESNO    ,m_null,ADVHUD_X,SB_Y+13*8, {"hudadd_crosshair_health"}},
-  {"CHANGE CROSSHAIR COLOR ON TARGET"        ,S_YESNO    ,m_null,ADVHUD_X,SB_Y+14*8, {"hudadd_crosshair_target"}},
-  {"LOCK CROSSHAIR ON TARGET"                ,S_YESNO    ,m_null,ADVHUD_X,SB_Y+15*8, {"hudadd_crosshair_lock_target"}},
-  {"DEFAULT CROSSHAIR COLOR"                 ,S_CRITEM   ,m_null,ADVHUD_X,SB_Y+16*8, {"hudadd_crosshair_color"}},
-  {"TARGET CROSSHAIR COLOR"                  ,S_CRITEM   ,m_null,ADVHUD_X,SB_Y+17*8, {"hudadd_crosshair_target_color"}},
+  {"CROSSHAIR SETTINGS"            ,S_SKIP|S_TITLE,m_null,ADVHUD_X,SB_Y+12*8},
+  {"ENABLE CROSSHAIR"              ,S_CHOICE   ,m_null,ADVHUD_X,SB_Y+13*8, {"hudadd_crosshair"}, 0, 0, 0, crosshair_str},
+  {"SCALE CROSSHAIR"               ,S_YESNO    ,m_null,ADVHUD_X,SB_Y+14*8, {"hudadd_crosshair_scale"}},
+  {"CHANGE CROSSHAIR COLOR BY PLAYER HEALTH" ,S_YESNO    ,m_null,ADVHUD_X,SB_Y+15*8, {"hudadd_crosshair_health"}},
+  {"CHANGE CROSSHAIR COLOR ON TARGET"        ,S_YESNO    ,m_null,ADVHUD_X,SB_Y+16*8, {"hudadd_crosshair_target"}},
+  {"LOCK CROSSHAIR ON TARGET"                ,S_YESNO    ,m_null,ADVHUD_X,SB_Y+17*8, {"hudadd_crosshair_lock_target"}},
+  {"DEFAULT CROSSHAIR COLOR"                 ,S_CRITEM   ,m_null,ADVHUD_X,SB_Y+18*8, {"hudadd_crosshair_color"}},
+  {"TARGET CROSSHAIR COLOR"                  ,S_CRITEM   ,m_null,ADVHUD_X,SB_Y+19*8, {"hudadd_crosshair_target_color"}},
 
   {0,S_RESET,m_null,X_BUTTON,Y_BUTTON},
   {"<- PREV",S_SKIP|S_PREV,m_null,KB_PREV,SB_Y+20*8, {stat_settings1}},
@@ -2959,10 +2992,12 @@ setup_menu_t auto_settings1[] =  // 1st AutoMap Settings screen
 #ifdef GL_DOOM
   {"Enable textured display",                 S_YESNO,m_null,AU_X,AU_Y+8*8, {"map_textured"}, 0, 0, M_ChangeMapTextured},
   {"Things appearance",                       S_CHOICE,m_null,AU_X,AU_Y+9*8, {"map_things_appearance"}, 0, 0, NULL, map_things_appearance_list},
-  {"Translucency percentage",                 S_SKIP|S_TITLE,m_null,AU_X,AU_Y+10*8},
-  {"Textured automap",                        S_NUM,  m_null,AU_X,AU_Y+11*8, {"map_textured_trans"}},
-  {"Textured automap in overlay mode",        S_NUM,  m_null,AU_X,AU_Y+12*8, {"map_textured_overlay_trans"}},
-  {"Lines in overlay mode",                   S_NUM,  m_null,AU_X,AU_Y+13*8, {"map_lines_overlay_trans"}},
+  {"Player arrow appearance",                 S_CHOICE,m_null,AU_X,AU_Y+10*8, {"map_player_arrow_appearance"}, 0, 0, NULL, map_player_arrow_appearance_list},
+  {"Enhanced allmap power up",                S_YESNO,m_null,AU_X,AU_Y+11*8, {"map_enhanced_allmap"}},
+  {"Translucency percentage",                 S_SKIP|S_TITLE,m_null,AU_X,AU_Y+12*8},
+  {"Textured automap",                        S_NUM,  m_null,AU_X,AU_Y+13*8, {"map_textured_trans"}},
+  {"Textured automap in overlay mode",        S_NUM,  m_null,AU_X,AU_Y+14*8, {"map_textured_overlay_trans"}},
+  {"Lines in overlay mode",                   S_NUM,  m_null,AU_X,AU_Y+15*8, {"map_lines_overlay_trans"}},
 #endif
 
   // Button for resetting to defaults
@@ -3245,10 +3280,12 @@ extern int detect_voices, realtic_clock_rate, tran_filter_pct;
 setup_menu_t gen_settings1[], gen_settings2[], gen_settings3[];
 setup_menu_t gen_settings4[], gen_settings5[], gen_settings6[];
 setup_menu_t gen_settings7[], gen_settings8[];
+setup_menu_t gen_settings_prboomx[];
 
 setup_menu_t* gen_settings[] =
 {
   gen_settings1,
+  gen_settings_prboomx,
   gen_settings2,
   gen_settings3,
   gen_settings4,
@@ -3296,21 +3333,42 @@ setup_menu_t gen_settings1[] = { // General Settings screen1
   {"Enable Translucency",            S_YESNO,            m_null, G_X, G_Y+ 9*8, {"translucency"}, 0, 0, M_Trans},
   {"Translucency filter percentage", S_NUM,              m_null, G_X, G_Y+10*8, {"tran_filter_pct"}, 0, 0, M_Trans},
   {"Uncapped Framerate",             S_YESNO,            m_null, G_X, G_Y+11*8, {"uncapped_framerate"}, 0, 0, M_ChangeUncappedFrameRate},
+  {"Uncapped Framerate Limit",       S_NUM,              m_null, G_X, G_Y+12*8, {"fps_limit"}},
 
-  {"Sound & Music",                  S_SKIP|S_TITLE,     m_null, G_X, G_Y+13*8},
-  {"Number of Sound Channels",       S_NUM|S_PRGWARN,    m_null, G_X, G_Y+14*8, {"snd_channels"}},
-  {"Enable v1.1 Pitch Effects",      S_YESNO,            m_null, G_X, G_Y+15*8, {"pitched_sounds"}},
-  {"PC Speaker emulation",           S_YESNO|S_PRGWARN,  m_null, G_X, G_Y+16*8, {"snd_pcspeaker"}},
-  {"Preferred MIDI player",          S_CHOICE|S_PRGWARN, m_null, G_X, G_Y+17*8, {"snd_midiplayer"}, 0, 0, M_ChangeMIDIPlayer, midiplayers},
-  {"disable sound cutoffs",          S_YESNO,            m_null, G_X, G_Y+18*8, {"full_sounds"}},
+  {"Sound & Music",                  S_SKIP|S_TITLE,     m_null, G_X, G_Y+14*8},
+  {"Number of Sound Channels",       S_NUM|S_PRGWARN,    m_null, G_X, G_Y+15*8, {"snd_channels"}},
+  {"Enable v1.1 Pitch Effects",      S_YESNO,            m_null, G_X, G_Y+16*8, {"pitched_sounds"}},
+  {"PC Speaker emulation",           S_YESNO|S_PRGWARN,  m_null, G_X, G_Y+17*8, {"snd_pcspeaker"}},
+  {"Preferred MIDI player",          S_CHOICE|S_PRGWARN, m_null, G_X, G_Y+18*8, {"snd_midiplayer"}, 0, 0, M_ChangeMIDIPlayer, midiplayers},
+  {"disable sound cutoffs",          S_YESNO,            m_null, G_X, G_Y+19*8, {"full_sounds"}},
 //{"Low-pass filter",                S_YESNO,            m_null, G_X, G_Y+19*8, {"lowpass_filter"}},
 
   // Button for resetting to defaults
   {0,S_RESET,m_null,X_BUTTON,Y_BUTTON},
 
+  {"NEXT ->",S_SKIP|S_NEXT,m_null,KB_NEXT,KB_Y+20*8, {gen_settings_prboomx}},
+  {0,S_SKIP|S_END,m_null}
+};
+
+
+setup_menu_t gen_settings_prboomx[] = { // prboomX General Settings
+
+  {"PrBoomX Settings"                 ,S_SKIP|S_TITLE,m_null, G_X, G_Y+ 1*8},
+  {"Organize Save files by loaded WAD",S_YESNO       ,m_null, G_X, G_Y+2*8, {"organize_saves"}, 0, 0, D_AdjustSaveLocation},
+  {"Enhanced allmap power up"         ,S_YESNO       ,m_null,G_X,G_Y+3*8, {"map_enhanced_allmap"}},
+  {"Player map arrow appearance",     S_CHOICE       ,m_null,G_X,G_Y+4*8, {"map_player_arrow_appearance"}, 0, 0, NULL, map_player_arrow_appearance_list},
+  {"Skip QuickSave/Load confirmation" ,S_YESNO       ,m_null,G_X,G_Y+5*8, {"skip_quicksaveload_confirmation"}},
+  {"Skip Save confirmation message"   ,S_YESNO       ,m_null,G_X,G_Y+6*8, {"no_save_message"}},
+  {"Enable Time Warping"              ,S_YESNO       ,m_null,G_X,G_Y+7*8, {"enable_time_warping"}},
+  {"Autoload Time Warp Timelines"     ,S_YESNO       ,m_null,G_X,G_Y+8*8, {"autoload_timeline"}},
+  {"Autosave Timeline upon Quit"      ,S_YESNO       ,m_null,G_X,G_Y+9*8, {"autosave_timeline_on_exit"}},
+  {"Fix Blockmap bug"                 ,S_YESNO       ,m_null,G_X,G_Y+10*8, {"comp_fix_blockmap"}},
+
+  {"<- PREV",S_SKIP|S_PREV, m_null,KB_PREV, KB_Y+20*8, {gen_settings1}},
   {"NEXT ->",S_SKIP|S_NEXT,m_null,KB_NEXT,KB_Y+20*8, {gen_settings2}},
   {0,S_SKIP|S_END,m_null}
 };
+
 
 static const char *gen_skillstrings[] = {
   // Dummy first option because defaultskill is 1-based
@@ -3360,12 +3418,13 @@ setup_menu_t gen_settings2[] = { // General Settings screen2
   {"Default compatibility level",      S_CHOICE,        m_null, G_X, G_Y+15*8, {"default_compatibility_level"}, 0, 0, NULL, &gen_compstrings[1]},
   {"Show ENDOOM screen",               S_YESNO,         m_null, G_X, G_Y+16*8, {"showendoom"}},
   {"Fullscreen menu background",       S_YESNO, m_null, G_X, G_Y + 17*8, {"menu_background"}},
+  {"Organize Save files by loaded WAD",S_YESNO       ,m_null, G_X, G_Y+18*8  , {"organize_saves"}, 0, 0, D_AdjustSaveLocation},
 #ifdef USE_WINDOWS_LAUNCHER
-  {"Use In-Game Launcher",             S_CHOICE,        m_null, G_X, G_Y+ 18*8, {"launcher_enable"}, 0, 0, NULL, launcher_enable_states},
+  {"Use In-Game Launcher",             S_CHOICE,        m_null, G_X, G_Y+ 20*8, {"launcher_enable"}, 0, 0, NULL, launcher_enable_states},
 #endif
 
 
-  {"<- PREV",S_SKIP|S_PREV, m_null, KB_PREV, KB_Y+20*8, {gen_settings1}},
+  {"<- PREV",S_SKIP|S_PREV, m_null, KB_PREV, KB_Y+20*8, {gen_settings_prboomx}},
   {"NEXT ->",S_SKIP|S_NEXT,m_null,KB_NEXT,KB_Y+20*8, {gen_settings3}},
   {0,S_SKIP|S_END,m_null}
 };
@@ -3666,6 +3725,7 @@ enum
   compat_maxhealth,
   compat_translucency,
   compat_skytransfers,
+  compat_fixblockmap
 };
 
 setup_menu_t comp_settings1[] =  // Compatibility Settings screen #1
@@ -3766,7 +3826,7 @@ setup_menu_t comp_settings3[] =  // Compatibility Settings screen #3
   //e6y
   {"Retain quirks in Doom's sound code", S_YESNO, m_null, C_X,
    C_Y + compat_sound * COMP_SPC, {"comp_sound"}},
-  {"PrBoom-Plus Settings", S_SKIP|S_TITLE,m_null,C_X,
+  {"PrBoomX Settings", S_SKIP|S_TITLE,m_null,C_X,
    C_Y + compat_plussettings * COMP_SPC},
   {"Use Doom's buggy \"Ouch\" face code", S_YESNO, m_null, C_X,
    C_Y + compat_ouchface * COMP_SPC, {"comp_ouchface"}},
@@ -3777,6 +3837,10 @@ setup_menu_t comp_settings3[] =  // Compatibility Settings screen #3
    // [FG]
   {"allow MBF sky transfers in all complevels", S_YESNO, m_null, C_X,
    C_Y + compat_skytransfers * COMP_SPC, {"comp_skytransfers"}},
+
+  {"fix blockmap bug", S_YESNO, m_null, C_X,
+   C_Y + compat_fixblockmap * COMP_SPC, {"comp_fix_blockmap"}},
+
   {"<- PREV", S_SKIP|S_PREV, m_null, KB_PREV, C_Y+C_NEXTPREV,{comp_settings2}},
   {0,S_SKIP|S_END,m_null}
 };
@@ -3835,6 +3899,7 @@ enum {
   mess_color_play,
   mess_timer,
   mess_color_chat,
+  mess_color_console,
   mess_chat_timer,
   mess_color_review,
   mess_timed,
@@ -3864,6 +3929,9 @@ setup_menu_t mess_settings1[] =  // Messages screen
 
   {"Chat Message Color", S_CRITEM, m_null, M_X,
    M_Y + mess_color_chat*8, {"hudcolor_chat"}},
+
+  {"Console Message Color", S_CRITEM, m_null, M_X,
+   M_Y + mess_color_console*8, {"hudcolor_console"}},
 
 #if 0
   {"Chat Message Duration (ms)", S_NUM, m_null, M_X,
@@ -4561,18 +4629,14 @@ enum {
   prog_stub,
   prog_stub1,
   prog_stub2,
-  adcr
-#ifdef __EMSCRIPTEN__
-  , wasmcr
-#endif // __EMSCRIPTEN__
+  adcr,
+  wasmcr
 };
 
 enum {
   cr_prog=0,
-  cr_adcr=2
-#ifdef __EMSCRIPTEN__
-  , cr_wasmcr=11
-#endif // __EMSCRIPTEN__
+  cr_adcr=2,
+  cr_wasmcr=11
 };
 
 #define CR_S 9
@@ -4599,10 +4663,8 @@ setup_menu_t cred_settings[]={
   {"Jess Haas for lSDLDoom",S_SKIP|S_CREDIT|S_LEFTJUST,m_null, CR_X2, CR_Y + CR_S*(adcr+7) + CR_SH*cr_adcr},
   {"all others who helped (see AUTHORS file)",S_SKIP|S_CREDIT|S_LEFTJUST,m_null, CR_X2, CR_Y + CR_S*(adcr+8)+CR_SH*cr_adcr},
 
-#ifdef __EMSCRIPTEN__
   {"WebAssembly Build By",S_SKIP|S_CREDIT|S_LEFTJUST,m_null, CR_X, CR_Y + CR_S*wasmcr + CR_SH*cr_wasmcr},
   {"Gregory Maynard-Hoare",S_SKIP|S_CREDIT|S_LEFTJUST,m_null, CR_X2, CR_Y + CR_S*(wasmcr+1)+CR_SH*cr_wasmcr},
-#endif // __EMSCRIPTEN__
 
   {0,S_SKIP|S_END,m_null}
 };
@@ -4671,6 +4733,7 @@ dboolean M_Responder (event_t* ev) {
 
   ch = -1; // will be changed to a legit char if we're going to use it here
 
+  if(console_on) return false;
   // Process joystick input
 
   if (ev->type == ev_joystick && joywait < I_GetTime())  {
@@ -4877,6 +4940,18 @@ dboolean M_Responder (event_t* ev) {
       {
       S_StartSound(NULL,sfx_swtchn);
       M_QuickSave();
+      return true;
+      }
+
+    if (ch == key_timewarp_backward)
+      {
+      G_TimeWarpBackward();
+      return true;
+      }
+
+    if (ch == key_timewarp_forward)
+      {
+      G_TimeWarpForward();
       return true;
       }
 
@@ -6120,7 +6195,9 @@ void M_ClearMenus (void)
   // if (!netgame && usergame && paused)
   //     sendpause = true;
 
+#ifdef __EMSCRIPTEN__
   wasm_capture_mouse();
+#endif // __EMSCRIPTEN__
 }
 
 //

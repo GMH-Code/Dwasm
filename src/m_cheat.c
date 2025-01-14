@@ -48,6 +48,7 @@
 #include "p_tick.h"
 #include "e6y.h" // G_GotoNextLevel()
 #include "w_wad.h" // W_GetLumpInfoByNum()
+#include "c_cmd.h"
 
 #define plyr (players+consoleplayer)     /* the console player */
 
@@ -94,9 +95,13 @@ static void cheat_megaarmour();
 static void cheat_health();
 static void cheat_notarget();
 static void cheat_fly();
+static void cheat_buddha();
+static void cheat_resurrect();
+static void cheat_target_massacre();
 static void cheat_skill();
 static void cheat_comp_ext();
 static void cheat_shorttics();
+static void cheat_nextlevel();
 
 //-----------------------------------------------------------------------------
 //
@@ -127,6 +132,7 @@ cheatseq_t cheat[] = {
   CHEAT("idfa",       "Ammo",             cht_never, cheat_fa, 0),
   CHEAT("idspispopd", "No Clipping 1",    cht_never, cheat_noclip, 0),
   CHEAT("idclip",     "No Clipping 2",    cht_never, cheat_noclip, 0),
+  CHEAT("tntcc",     "No Clipping 3",    cht_never, cheat_noclip, 0),
   CHEAT("idbeholdh",  "Invincibility",    cht_never, cheat_health, 0),
   CHEAT("idbeholdm",  "Invincibility",    cht_never, cheat_megaarmour, 0),
   CHEAT("idbeholdv",  "Invincibility",    cht_never, cheat_pw, pw_invulnerability),
@@ -144,6 +150,7 @@ cheatseq_t cheat[] = {
   CHEAT("tntcomp",    NULL,               cht_never, cheat_comp, 0),
   // jff 2/01/98 kill all monsters
   CHEAT("tntem",      NULL,               cht_never, cheat_massacre, 0),
+  CHEAT("tntsem",      NULL,               cht_never, cheat_target_massacre, 0),
   // killough 2/07/98: moved from am_map.c
   CHEAT("iddt",       "Map cheat",        not_dm, cheat_ddt, 0),
   // killough 2/07/98: HOM autodetector
@@ -192,6 +199,11 @@ cheatseq_t cheat[] = {
   CHEAT("notarget",   NULL,               cht_never, cheat_notarget, 0),
   // fly mode is active
   CHEAT("fly",        NULL,               cht_never, cheat_fly, 0),
+
+  // jds cheats
+  CHEAT("buddha",     NULL,               cht_never, cheat_buddha, 0),
+  CHEAT("liveagain",  NULL,               cht_never, cheat_resurrect, 0),
+
   // Show skill level
   CHEAT("skill",      NULL,               always, cheat_skill, 0),
 
@@ -200,6 +212,8 @@ cheatseq_t cheat[] = {
 
   // Enable/disable shorttics in-game
   CHEAT("tntshort",   NULL,               cht_never, cheat_shorttics, 0),
+
+  CHEAT("nextlevel",   NULL,               cht_never, cheat_nextlevel, 0),
 
   // end-of-list marker
   {NULL}
@@ -401,7 +415,7 @@ static void cheat_clev0()
     doom_printf("Current: %s",  W_GetLumpInfoByNum(maplumpnum)->name);
 }
 
-static void cheat_clev(char buf[3])
+void cheat_clev(char buf[3])
 {
   int epsd, map;
   struct MapEntry* entry;
@@ -450,7 +464,13 @@ static void cheat_clev(char buf[3])
 
   plyr->message = s_STSTR_CLEV; // Ty 03/27/98 - externalized
 
+  C_ConsolePrintf("Warping to %s", MAPNAME(epsd, map));
   G_DeferedInitNew(gameskill, epsd, map);
+}
+
+static void cheat_nextlevel()
+{
+    G_ExitLevel();
 }
 
 // 'mypos' for player position
@@ -550,6 +570,51 @@ static void cheat_massacre()    // jff 2/01/98 kill all monsters
   // Ty 03/27/98 - string(s) *not* externalized
   doom_printf("%d Monster%s Killed", killcount, killcount==1 ? "" : "s");
 }
+
+
+static void cheat_target_massacre()    // jff 2/01/98 kill all monsters
+{
+  // jff 02/01/98 'em' cheat - kill all monsters
+  // partially taken from Chi's .46 port
+  //
+  // killough 2/7/98: cleaned up code and changed to use dprintf;
+  // fixed lost soul bug (LSs left behind when PEs are killed)
+
+  int killcount=0;
+  thinker_t *currentthinker = NULL;
+  extern void A_PainDie(mobj_t *);
+
+  // killough 7/20/98: kill friendly monsters only if no others to kill
+  uint_64_t mask = MF_FRIEND;
+  P_MapStart();
+  do
+    while ((currentthinker = P_NextThinker(currentthinker,th_all)) != NULL)
+    if (currentthinker->function == P_MobjThinker &&
+  !(((mobj_t *) currentthinker)->flags & mask) && // killough 7/20/98
+        (((mobj_t *) currentthinker)->flags & MF_COUNTKILL ||
+         ((mobj_t *) currentthinker)->type == MT_SKULL))
+      { // killough 3/6/98: kill even if PE is dead
+          if(((mobj_t *) currentthinker)->target == plyr->mo) {
+        if (((mobj_t *) currentthinker)->health > 0)
+          {
+            killcount++;
+            P_DamageMobj((mobj_t *)currentthinker, NULL, NULL, 10000);
+          }
+        if (((mobj_t *) currentthinker)->type == MT_PAIN)
+          {
+            A_PainDie((mobj_t *) currentthinker);    // killough 2/8/98
+            P_SetMobjState ((mobj_t *) currentthinker, S_PAIN_DIE6);
+          }
+          }
+      }
+  while (!killcount && mask ? mask=0, 1 : 0); // killough 7/20/98
+  P_MapEnd();
+  // killough 3/22/98: make more intelligent about plural
+  // Ty 03/27/98 - string(s) *not* externalized
+  doom_printf("%d Monster%s Killed", killcount, killcount==1 ? "" : "s");
+}
+
+
 
 // killough 2/7/98: move iddt cheat from am_map.c to here
 // killough 3/26/98: emulate Doom better
@@ -693,6 +758,37 @@ static void cheat_fly()
     }
   }
 }
+
+dboolean buddha = false;
+static void cheat_buddha()
+{
+  plyr->message = (buddha = !buddha) ?
+    "Buddha Mode Enabled" : "Buddha Mode Disabled";
+}
+
+dboolean is_buddha()
+{
+    return buddha;
+}
+
+static void cheat_resurrect()
+{
+  if (plyr->playerstate == PST_DEAD) {
+      plyr->message = "You live...again!";
+      plyr->playerstate = PST_LIVE;
+      plyr->health = initial_health;
+      plyr->mo->health = initial_health;
+      plyr->readyweapon = wp_fist;
+      plyr->pendingweapon = wp_fist;
+      plyr->mo->flags = MF_SOLID|MF_SHOOTABLE|MF_DROPOFF|MF_PICKUP|MF_NOTDMATCH;
+      plyr->mo->radius = 16*FRACUNIT;
+      plyr->mo->height = 56*FRACUNIT;
+  } else {
+      plyr->message = "Your life force throbs on...";
+  }
+}
+
+
 
 static void cheat_skill()
 {

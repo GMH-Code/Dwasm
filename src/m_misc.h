@@ -139,4 +139,7 @@ void M_ArrayFree(array_t *data);
 void M_ArrayAddItem(array_t *data, void *item, int itemsize);
 void* M_ArrayGetNewItem(array_t *data, int itemsize);
 
+extern int numdefaults;
+extern default_t defaults[];
+
 #endif
