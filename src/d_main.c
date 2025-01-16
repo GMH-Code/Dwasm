@@ -185,11 +185,11 @@ const unsigned char* D_CalculateLoadedWADContentMD5()
 {
     static dboolean initialized = false;
     if (!initialized) {
+        int wadlen = 0;
         struct MD5Context wads_md5;
         memset(&wads_md5, 0, sizeof(struct MD5Context));
         free(savegame_wadlist);
         savegame_wadlist = malloc(sizeof(char));
-        int wadlen = 0;
         savegame_wadlist[0] = '\0';
         MD5Init(&wads_md5);
         for (int j = 0; j < numwadfiles; j++) {
@@ -223,16 +223,20 @@ void D_AdjustSaveLocation()
     }
 
     if (organize_saves) {
+        char* newsavedir;
+        int wrptr;
+        char b[3];
+
         D_CalculateLoadedWADContentMD5();
         /* append the digest to the base save game folder */
-        char* newsavedir = (char*) malloc(strlen(basesavegame) + sizeof(wadlist_digest) + 2);
+        newsavedir = (char*) malloc(strlen(basesavegame) + sizeof(wadlist_digest) + 2);
         strcpy(newsavedir, basesavegame);
         if (!HasTrailingSlash(newsavedir)) {
             strcat(newsavedir, "/");
         }
 
-        int wrptr = strlen(newsavedir);
-        char b[3];
+        wrptr = strlen(newsavedir);
+
         for (int i = 0; i < 16; i++) {
             snprintf(b, sizeof(b), "%02X",wadlist_digest[i]);
             strcat(newsavedir, b);
@@ -2035,12 +2039,13 @@ static void D_DoomMainSetup(void)
         // e6y
         // reorganization of the code for looking for wads
         // in all standard dirs (%DOOMWADDIR%, etc)
+        dboolean is_zip;
         char *file = I_FindFile(myargv[p], ".wad");
         if (!file && D_TryGetWad(myargv[p]))
         {
           file = I_FindFile(myargv[p], ".wad");
         }
-        dboolean is_zip = (0 == stricmp(strrchr(file, '.'), ".zip"));
+        is_zip = (0 == stricmp(strrchr(file, '.'), ".zip"));
         if (file)
         {
             if (is_zip) {

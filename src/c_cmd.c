@@ -62,6 +62,16 @@ static mobj_t* FindNextMobj(fixed_t* x, fixed_t* y, mobj_t* startmobj, int flags
 static dboolean IsMobjKey(mobj_t* mo);
 static dboolean IsMobjInThinkerList(mobj_t* mo);
 
+typedef struct keybind_t
+{
+    int keycode;
+    char* cmd;
+    evtype_t type;
+    struct keybind_t* next;
+} keybind_t;
+
+static keybind_t* keybind_head = NULL;
+
 typedef struct tick_event_t {
     int ticks_left;
     void (*callback)(char*);
@@ -1779,16 +1789,6 @@ static const char* MouseCodeToMouseName(const int mousecode)
     return NULL;
 }
 
-typedef struct keybind_t
-{
-    int keycode;
-    char* cmd;
-    evtype_t type;
-    struct keybind_t* next;
-} keybind_t;
-
-static keybind_t* keybind_head = NULL;
-
 dboolean C_RegisterBind(int keycode, char* cmd, evtype_t type)
 {
     keybind_t* kb = keybind_head;
@@ -1908,13 +1908,16 @@ static char* C_GetConsoleSettingsFile()
 #define CONSOLE_CONFIG_LINE_MAX (256)
 void C_SaveSettings()
 {
+    keybind_t* kb;
+    FILE* bindfile;
+
     /* do nothing if console is disallowed */
     if (netgame || demorecording || demoplayback || gameaction == ga_playdemo) {
         return;
     }
 
-    keybind_t* kb = keybind_head;
-    FILE* bindfile = M_fopen (C_GetConsoleSettingsFile(), "w");
+    kb = keybind_head;
+    bindfile = M_fopen (C_GetConsoleSettingsFile(), "w");
 
     if (bindfile) {
         while (kb) {

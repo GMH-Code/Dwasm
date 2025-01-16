@@ -207,14 +207,13 @@ static cvartype_t C_CvarInferType(const char* value, cvarval_t* converted)
     int ivalue;
     char* endptr = NULL;
     char* endarg = NULL;
+    cvartype_t type = CVAR_TYPE_STRING;
 
     /* value must be at least one char to be valid */
     if (!value || !*value)
         return CVAR_TYPE_INVALID;
 
-    cvartype_t type = CVAR_TYPE_STRING;
-
-    endarg = value + strlen(value);
+    endarg = (char *)(value + strlen(value));
 
     ivalue = strtol(value, &endptr, 0);
 
@@ -455,7 +454,7 @@ float C_CvarGetAsFloat(const char* key, cvarstatus_t* status)
 {
     cvarstatus_t s;
     cvar_t* cvar;
-    float value = NAN;
+    float value = 0.0f;
 
     cvar = C_CvarFind(key, &s);
 

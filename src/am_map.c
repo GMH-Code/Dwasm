@@ -2577,21 +2577,26 @@ void AM_Drawer (void)
   AM_drawPlayers();
   AM_drawThings(); //jff 1/5/98 default double IDDT sprite
   if (selecting_magic_sector && (map_enhanced_allmap && (ddt_cheating || (players+consoleplayer)->powers[pw_allmap]))) {
+      fixed_t tmapx;
+      fixed_t tmapy;
+      subsector_t* s;
+
       AM_drawCrosshair(mapcolor_hai2);
 
-      fixed_t tmapx = (m_x + m_w/2);
-      fixed_t tmapy = (m_y + m_h/2);
+      tmapx = (m_x + m_w/2);
+      tmapy = (m_y + m_h/2);
 
-      subsector_t* s = R_PointInSubsector(tmapx << FRACTOMAPBITS,tmapy << FRACTOMAPBITS);
+      s = R_PointInSubsector(tmapx << FRACTOMAPBITS,tmapy << FRACTOMAPBITS);
 
       if(s && s->sector) {
+#define MAGIC_LINE_DISTANCE_THRESHOLD (8 << MAPBITS)
+          float min_distance = MAGIC_LINE_DISTANCE_THRESHOLD;
+          short int min_tag = 0;
+
           magic_sector = s->sector;
           magic_tag = 0;
 
-#define MAGIC_LINE_DISTANCE_THRESHOLD (8 << MAPBITS)
           /* if we are close to a tagged line in the sector, choose it instead */
-          float min_distance = MAGIC_LINE_DISTANCE_THRESHOLD;
-          short int min_tag = 0;
           for( int i = 0; i < s->sector->linecount; i++ ) {
               line_t* l = s->sector->lines[i];
               if( l && (l->tag > 0) ) {
@@ -2647,13 +2652,16 @@ void AM_GetCrosshairPosition(fixed_t* x, fixed_t* y)
 
 void AM_SetCenterPosition(fixed_t* x, fixed_t* y)
 {
+    fixed_t new_x;
+    fixed_t new_y;
+
     if (!x || !y) return;
 
     /* disable follow mode for jumps */
     automapmode &= ~am_follow;
 
-    fixed_t new_x = MAX(min_x, MIN(max_x, (*x >> FRACTOMAPBITS)));
-    fixed_t new_y = MAX(min_y, MIN(max_y, (*y >> FRACTOMAPBITS)));
+    new_x = MAX(min_x, MIN(max_x, (*x >> FRACTOMAPBITS)));
+    new_y = MAX(min_y, MIN(max_y, (*y >> FRACTOMAPBITS)));
 
     m_x = new_x - m_w/2;
     m_y = new_y - m_h/2;

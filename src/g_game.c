@@ -2413,7 +2413,7 @@ void G_DoLoadGame(void)
 // Description is a 24 byte text string
 //
 
-void G_SaveGame(int slot, char *description, dboolean immediate)
+void G_SaveGame(int slot, const char *description, dboolean immediate)
 {
   strcpy(savedescription, description);
   if (demoplayback || immediate) {
@@ -5003,6 +5003,8 @@ static void G_TimeWarpSetNextAnchorPoint()
 
 void G_TimeWarpForward()
 {
+    int check_past_limit;
+
     if (!G_CheckTimeWarpingIsOK(true))
         return;
 
@@ -5011,7 +5013,7 @@ void G_TimeWarpForward()
      * it means we are "in the present"
      * and no future warping is possible
      */
-    int check_past_limit = WRAP_PLUS(timewarp_position, 1, TIMEWARP_SLOTS);
+    check_past_limit = WRAP_PLUS(timewarp_position, 1, TIMEWARP_SLOTS);
 
     /* ensure time warp is valid */
     if (timewarp_position < 0 || (check_past_limit == timewarp_future_limit)) {
@@ -5027,6 +5029,8 @@ void G_TimeWarpForward()
 
 void G_TimeWarpBackward()
 {
+    int timewarp_position_save;
+
     if (!G_CheckTimeWarpingIsOK(true))
         return;
 
@@ -5040,7 +5044,7 @@ void G_TimeWarpBackward()
     /* if we are warping from the end of the timeline,
      * mark it in the timeline so we can return
      */
-    int timewarp_position_save = timewarp_position;
+    timewarp_position_save = timewarp_position;
     if (timewarp_future_limit == WRAP_PLUS(timewarp_position, 1, TIMEWARP_SLOTS)
             && timewarp_ticks > TIMEWARP_NEAR_WARP_START
             && players[consoleplayer].playerstate != PST_DEAD) {

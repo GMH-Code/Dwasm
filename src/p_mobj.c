@@ -781,6 +781,8 @@ void P_MobjThinker (mobj_t* mobj)
   // removed old code which looked at target references
   // (we use pointer reference counting now)
 
+  static unsigned int regen = 0;
+
   if (mobj->type == MT_MUSICSOURCE)
   {
     MusInfoThinker(mobj);
@@ -793,7 +795,6 @@ void P_MobjThinker (mobj_t* mobj)
 
   CheckThingsHealthTracer(mobj);  //e6y
 
-  static unsigned int regen = 0;
 #define REGEN_STARTUP (35*2)
   if((mobj == players[consoleplayer].mo) && C_CvarIsSet("regenerate")) {
       if(mobj->momx == 0 && mobj->momy == 0) {

@@ -266,6 +266,7 @@ static char *zip_name_normalize(char *name, char *const nname, size_t len) {
 
 static mz_bool zip_name_match(const char *name1, const char *name2) {
   char *nname2 = NULL;
+  mz_bool res;
 
 #ifdef ZIP_RAW_ENTRYNAME
   nname2 = STRCLONE(name2);
@@ -277,7 +278,7 @@ static mz_bool zip_name_match(const char *name1, const char *name2) {
     return MZ_FALSE;
   }
 
-  mz_bool res = (strcmp(name1, nname2) == 0) ? MZ_TRUE : MZ_FALSE;
+  res = (strcmp(name1, nname2) == 0) ? MZ_TRUE : MZ_FALSE;
   CLEANUP(nname2);
   return res;
 }
@@ -436,18 +437,20 @@ static ssize_t zip_entry_mark(struct zip_t *zip,
                               const size_t len) {
   ssize_t i = 0;
   ssize_t err = 0;
+  mz_zip_archive_file_stat file_stat;
+  mz_uint64 d_pos = ~0UL;
+
   if (!zip || !entry_mark || !entries) {
     return ZIP_ENOINIT;
   }
 
-  mz_zip_archive_file_stat file_stat;
-  mz_uint64 d_pos = ~0UL;
   for (i = 0; i < n; ++i) {
+    mz_bool name_matches = MZ_FALSE;
+
     if ((err = zip_entry_openbyindex(zip, i))) {
       return (ssize_t)err;
     }
 
-    mz_bool name_matches = MZ_FALSE;
     {
       size_t j;
       for (j = 0; j < len; ++j) {
@@ -531,13 +534,17 @@ static int zip_entry_finalize(struct zip_t *zip,
 
   ssize_t i = 0;
   mz_uint64 *local_header_ofs_array = (mz_uint64 *)calloc(n, sizeof(mz_uint64));
+  size_t *length;
+
   if (!local_header_ofs_array) {
     return ZIP_EOOMEM;
   }
 
   for (i = 0; i < n; ++i) {
+    ssize_t index;
+
     local_header_ofs_array[i] = entry_mark[i].m_local_header_ofs;
-    ssize_t index = zip_sort(local_header_ofs_array, i);
+    index = zip_sort(local_header_ofs_array, i);
 
     if (index != i) {
       zip_index_update(entry_mark, i, index);
@@ -545,7 +552,7 @@ static int zip_entry_finalize(struct zip_t *zip,
     entry_mark[i].file_index = index;
   }
 
-  size_t *length = (size_t *)calloc(n, sizeof(size_t));
+  length = (size_t *)calloc(n, sizeof(size_t));
   if (!length) {
     CLEANUP(local_header_ofs_array);
     return ZIP_EOOMEM;
@@ -606,12 +613,13 @@ static ssize_t zip_files_move(MZ_FILE *m_pFile, mz_uint64 writen_num,
   ssize_t n = 0;
   const size_t page_size = 1 << 12; // 4K
   mz_uint8 *move_buf = (mz_uint8 *)calloc(1, page_size);
+  ssize_t moved_length = 0;
+  ssize_t move_count = 0;
+
   if (!move_buf) {
     return ZIP_EOOMEM;
   }
 
-  ssize_t moved_length = 0;
-  ssize_t move_count = 0;
   while ((mz_int64)length > 0) {
     move_count = (length >= page_size) ? page_size : length;
     n = zip_file_move(m_pFile, writen_num, read_num, move_count, move_buf,
@@ -638,15 +646,17 @@ cleanup:
 
 static int zip_central_dir_move(mz_zip_internal_state *pState, int begin,
                                 int end, int entry_num) {
-  if (begin == entry_num) {
-    return 0;
-  }
-
   size_t l_size = 0;
   size_t r_size = 0;
   mz_uint32 d_size = 0;
   mz_uint8 *next = NULL;
-  mz_uint8 *deleted = &MZ_ZIP_ARRAY_ELEMENT(
+  mz_uint8 *deleted;
+
+  if (begin == entry_num) {
+    return 0;
+  }
+
+  deleted = &MZ_ZIP_ARRAY_ELEMENT(
       &pState->m_central_dir, mz_uint8,
       MZ_ZIP_ARRAY_ELEMENT(&pState->m_central_dir_offsets, mz_uint32, begin));
   l_size = (size_t)(deleted - (mz_uint8 *)(pState->m_central_dir.m_p));
@@ -710,6 +720,8 @@ static int zip_central_dir_delete(mz_zip_internal_state *pState,
 
   i = 0;
   while (i < entry_num) {
+    int k = 0, j;
+
     while ((i < entry_num) && (!deleted_entry_index_array[i])) {
       i++;
     }
@@ -721,7 +733,7 @@ static int zip_central_dir_delete(mz_zip_internal_state *pState,
       i++;
     }
     end = i;
-    int k = 0, j;
+
     for (j = end; j < entry_num; j++) {
       MZ_ZIP_ARRAY_ELEMENT(&pState->m_central_dir_offsets, mz_uint32,
                            begin + k) =
@@ -747,6 +759,7 @@ static ssize_t zip_entries_delete_mark(struct zip_t *zip,
   int i = 0;
   size_t deleted_entry_num = 0;
   ssize_t n = 0;
+  mz_zip_internal_state *pState;
 
   mz_bool *deleted_entry_flag_array =
       (mz_bool *)calloc(entry_num, sizeof(mz_bool));
@@ -754,7 +767,7 @@ static ssize_t zip_entries_delete_mark(struct zip_t *zip,
     return ZIP_EOOMEM;
   }
 
-  mz_zip_internal_state *pState = zip->archive.m_pState;
+  pState = zip->archive.m_pState;
   zip->archive.m_zip_mode = MZ_ZIP_MODE_WRITING;
 
   if ((!pState->m_pFile) || MZ_FSEEK64(pState->m_pFile, 0, SEEK_SET)) {
@@ -778,15 +791,18 @@ static ssize_t zip_entries_delete_mark(struct zip_t *zip,
     }
 
     while ((i < entry_num) && (entry_mark[i].type == MZ_MOVE)) {
+      mz_uint8 *p;
+      mz_uint32 offset;
+
       move_length += entry_mark[i].lf_length;
-      mz_uint8 *p = &MZ_ZIP_ARRAY_ELEMENT(
+      p = &MZ_ZIP_ARRAY_ELEMENT(
           &pState->m_central_dir, mz_uint8,
           MZ_ZIP_ARRAY_ELEMENT(&pState->m_central_dir_offsets, mz_uint32, i));
       if (!p) {
         CLEANUP(deleted_entry_flag_array);
         return ZIP_ENOENT;
       }
-      mz_uint32 offset = MZ_READ_LE32(p + MZ_ZIP_CDH_LOCAL_HEADER_OFS);
+      offset = MZ_READ_LE32(p + MZ_ZIP_CDH_LOCAL_HEADER_OFS);
       offset -= (mz_uint32)deleted_length;
       MZ_WRITE_LE32(p + MZ_ZIP_CDH_LOCAL_HEADER_OFS, offset);
       i++;
@@ -995,12 +1011,14 @@ static int _zip_entry_open(struct zip_t *zip, const char *entryname,
   zip->entry.method = level ? MZ_DEFLATED : 0;
 
   // UNIX or APPLE
+#ifndef __EMSCRIPTEN__
 #if MZ_PLATFORM == 3 || MZ_PLATFORM == 19
   // regular file with rw-r--r-- permissions
   zip->entry.external_attr = (mz_uint32)(0100644) << 16;
 #else
   zip->entry.external_attr = 0;
 #endif
+#endif // !__EMSCRIPTEN__
 
   num_alignment_padding_bytes =
       mz_zip_writer_compute_padding_needed_for_file_alignment(pzip);
