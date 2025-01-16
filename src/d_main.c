@@ -137,7 +137,9 @@ dboolean umapinfo_loaded;
 extern dboolean inhelpscreens;
 extern dboolean BorderNeedRefresh;
 
+#ifndef __EMSCRIPTEN__
 extern int fps_limit;
+#endif // !__EMSCRIPTEN__
 
 skill_t startskill;
 int     startepisode;
@@ -513,6 +515,7 @@ void D_Display (fixed_t frac)
     D_Wipe();
   }
 
+#ifndef __EMSCRIPTEN__
   // e6y
   // Don't thrash cpu during pausing or if the window doesnt have focus
   if ( (paused && !walkcamera.type) || (!window_focused) ) {
@@ -534,6 +537,7 @@ void D_Display (fixed_t frac)
           tick_a = SDL_GetTicks();
       }
   }
+#endif // !__EMSCRIPTEN__
 
   I_EndDisplay();
 }
