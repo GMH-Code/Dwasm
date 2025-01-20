@@ -5,7 +5,7 @@ This is an unofficial WebAssembly port of the engine behind the famous 3D first-
 
 [Run Dwasm in your browser here](https://gmh-code.github.io/dwasm/).
 
-Dwasm is based upon *PrBoom+*, and inherits significant enhancements to the original engine.  Some notable features include:
+Dwasm is based upon [PrBoom+](https://github.com/coelckers/prboom-plus) and [PrBoomX](https://github.com/JadingTsunami/prboomX).  Significant enhancements over the original engine include:
 
 - Widescreen aspect ratios
 - Custom resolutions above the standard 320x200 (or 640x400)
@@ -90,14 +90,14 @@ Attempts will be made to commit data to browser storage when:
 - Saving your game
 - Changing settings and exiting the game
 
-In this version, you get a unique collection of save points per IWAD, so you shouldn't run out if you play more than one game.
+In this version, you get a unique collection of save points for each sequence of WAD files, so you shouldn't run out if you play more than one game.
 
 Most settings have an immediate effect, but some cannot be done in realtime and require a page reload.  Alterations should persist, providing the browser stores the data.
 
 Command-Line Arguments
 ----------------------
 
-Like the desktop version of PrBoom+, you can pass arguments to this version at runtime.  By default, the query portion of the URL is used, but the JavaScript code can be modified to use anything else, such as an input text box.
+Like the desktop versions of PrBoom, you can pass arguments to this version at runtime.  By default, the query portion of the URL is used, but the JavaScript code can be modified to use anything else, such as an input text box.
 
 ### Example
 
@@ -182,9 +182,9 @@ To enable this feature:
 1. Clone or download GL4ES from https://ptitseb.github.io/gl4es/
 2. Run the GL4ES *Emscripten* build according to the instructions on https://ptitseb.github.io/gl4es/COMPILE.html
 
-### PrBoom+ WAD
+### PrBoomX WAD
 
-This file is mandatory, but is usually generated as a one-off and is done when building the native version of PrBoom+ (which this project also supports).  To build the native version, run these commands in the Dwasm folder:
+This file is mandatory, but is usually generated as a one-off and is done when building the native version of PrBoomX (which this project also supports).  To build the native version, run these commands in the Dwasm folder:
 
     mkdir build_native
     cd build_native
@@ -192,14 +192,16 @@ This file is mandatory, but is usually generated as a one-off and is done when b
 
 The compatible file should be in the `build_native` folder and match this exactly:
 
-    Filename: prboom-plus.wad
-    File size: 357,768 bytes (349 KiB)
-    SHA1: 8A799C6615702AAC72016B784E30EA1ABD3E197B
-    SHA256: 29E6E18023CF39319F9984107F5F0F796B2593B1C3A55FC79ADF3AE12498A6CE
+    Filename: prboomx.wad
+    File size: 489,196 bytes (477 KiB)
+    SHA1: 60EBF03709DCD18A26BB1132695545FDE6757A1A
+    SHA256: 2D7F5F697C23430C56C002BA0864A354D33BF3A250810374B044F8AD0A0999CA
+
+Generated files may contain changes unique to Dwasm.
 
 ### Dwasm
 
-To build the main project, place `prboom-plus.wad` and other files (such as an IWAD) that you would like to include into the `wasm/fs` folder.  All filenames must be in **lowercase**.
+To build the main project, place `prboomx.wad` and other files (such as an IWAD) that you would like to include into the `wasm/fs` folder.  All filenames must be in **lowercase**.
 
 Next, run these commands in the Dwasm folder.  Replace `/tmp/gl4es` with your GL4ES build, if applicable.  If you decided not to include WebGL support, *completely* remove the option `-DGL4ES_PATH=/tmp/gl4es`.
 

@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.0)
 
 project("Dwasm"
-    VERSION 2.0.0
+    VERSION 2.1.0
     HOMEPAGE_URL "https://github.com/GMH-Code/Dwasm")
 
 # Set a default build type if none was specified
