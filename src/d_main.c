@@ -228,8 +228,10 @@ void D_AdjustSaveLocation()
         char b[3];
 
         D_CalculateLoadedWADContentMD5();
-        /* append the digest to the base save game folder */
-        newsavedir = (char*) malloc(strlen(basesavegame) + sizeof(wadlist_digest) + 2);
+        // Append the digest to the base save game folder.  Each byte of the
+        // digest is encoded into a two-byte hex representation, so we need
+        // twice the memory to encode it.
+        newsavedir = (char*) malloc(strlen(basesavegame) + (sizeof(wadlist_digest) * 2) + 2);
         strcpy(newsavedir, basesavegame);
         if (!HasTrailingSlash(newsavedir)) {
             strcat(newsavedir, "/");
