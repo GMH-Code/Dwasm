@@ -199,6 +199,21 @@ The compatible file should be in the `build_native` folder and match this exactl
 
 Generated files may contain changes unique to Dwasm.
 
+### MIDI Music
+
+The default OPL2 synthesiser sounds good, requires no extra files, and has a minimal build size.  Timidity can be used for (subjectively) better-sounding music in certain mods and maps, but using it comes at the cost of a significantly larger build.
+
+You can skip to the next section if you want to stick to using OPL2, or, if you want to include Timidity support:
+
+1. Create a subfolder in `wasm/fs`, for example `soundfonts`.
+2. Place a Timidity-compatible soundfont collection in the new folder.  Files must be in `.pat` format.
+3. Assuming the collection has a `timidity.cfg` file that describes the instrument setup, place that file into `wasm/fs`.
+4. Find and adjust the `dir` line in `timidity.cfg` to point to the soundfont folder, with the root adjusted, for example, `dir /soundfonts`.  If the line does not exist, you may need to add it towards the top of the file.
+
+If you choose to prioritise build size over using Timidity, then the 'SDL' setting will not produce music.
+
+Many soundfont compilations on the Internet can sound great sometimes, but terrible at other times, which is why Timidity is not the default synthesiser.  Care should be taken as some of the better-sounding collections on the Internet *claim* to be free, but if you open the `.pat` files in an editor, this does not always appear to be true.
+
 ### Dwasm
 
 To build the main project, place `prboomx.wad` and other files (such as an IWAD) that you would like to include into the `wasm/fs` folder.  All filenames must be in **lowercase**.
