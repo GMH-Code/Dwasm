@@ -193,9 +193,9 @@ This file is mandatory, but is usually generated as a one-off and is done when b
 The compatible file should be in the `build_native` folder and match this exactly:
 
     Filename: prboomx.wad
-    File size: 489,196 bytes (477 KiB)
-    SHA1: 60EBF03709DCD18A26BB1132695545FDE6757A1A
-    SHA256: 2D7F5F697C23430C56C002BA0864A354D33BF3A250810374B044F8AD0A0999CA
+    File size: 470,223 bytes (459 KiB)
+    SHA1: C3946CA57137C974E474ABF8201994DCC00D463D
+    SHA256: 506FE7159EAF0A6CB479F866131EC7653638BB08928029CB8DABE1B3B1C9474D
 
 Generated files may contain changes unique to Dwasm.
 

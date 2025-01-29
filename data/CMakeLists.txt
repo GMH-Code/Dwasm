@@ -78,7 +78,6 @@ set(SOUNDS
     sounds/dsdgact.wav
     sounds/dsdgdth.wav
     sounds/dsdgpain.wav
-    sounds/dssecret.wav
     sounds/dssecall.wav
     sounds/dsitmall.wav
     sounds/dskilall.wav

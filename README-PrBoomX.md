@@ -72,8 +72,6 @@ Install [PrBoom-Plus](https://github.com/coelckers/prboom-plus) and place the bi
 * (Credit to [dsda-doom](https://github.com/kraflab/dsda-doom/)): Fix cl11+ bug that slows down maps with large monster counts.
     * [See here for details](https://github.com/kraflab/dsda-doom/commit/dc29f0ce801f6ff910ae3fc3e6b1210ac79e87cf)
 
-![Tag finder demo](prboom2/doc/magic_sector.gif)
-
 # Console commands
 
 - `resurrect`
@@ -502,8 +500,6 @@ Sub-bullets list accepted alternate names for weapons.
 * All Secrets Found (`DSSECALL`)
     * [Win Sound Effect](https://opengameart.org/content/win-sound-effect) by [Listener](https://opengameart.org/users/listener), CC0
     * [Sound Pack 01](https://opengameart.org/content/level-up-power-up-coin-get-13-sounds) by [wobbleboxx](https://opengameart.org/users/wobbleboxx), CC0
-* Secret Found (`DSSECRET`)
-    * [GUI Sound Effects](https://opengameart.org/content/gui-sound-effects) by [Lokif](https://opengameart.org/users/lokif), CC0
 * All Items Found (`DSITMALL`)
     * [Intro Jingle](https://opengameart.org/content/nes-shooter-music-5-tracks-3-jingles) by [SketchyLogic](https://opengameart.org/users/sketchylogic), CC0
 * All Monsters Killed (`DSKILALL`)
