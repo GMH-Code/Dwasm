@@ -2553,7 +2553,7 @@ setup_menu_t keys_settings2[] =  // Key Binding screen strings
   {"QUICKLOAD"   ,S_KEY       ,m_scrn,KB_X,KB_Y+16*8,{&key_quickload}},
   {"END GAME"    ,S_KEY       ,m_scrn,KB_X,KB_Y+17*8,{&key_endgame}},
   {"QUIT"        ,S_KEY       ,m_scrn,KB_X,KB_Y+18*8,{&key_quit}},
-  {"CONSOLE"     ,S_KEY       ,m_scrn,KB_X,KB_Y+19*8,{&key_console}},
+
   {"<- PREV", S_SKIP|S_PREV,m_null,KB_PREV,KB_Y+20*8, {keys_settings_prboomx}},
   {"NEXT ->", S_SKIP|S_NEXT,m_null,KB_NEXT,KB_Y+20*8, {keys_settings3}},
 
