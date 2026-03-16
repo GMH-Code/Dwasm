@@ -44,5 +44,7 @@ void wasm_hide_console(void);
 void wasm_show_console(void);
 void wasm_vid_resize(void);
 void wasm_capture_mouse(void);
+void wasm_soft_exit(int exit_code);
+void wasm_soft_exit_fs_check(void);
 
 #endif // !__WASM_IO__

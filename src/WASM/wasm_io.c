@@ -38,10 +38,13 @@
 
 #include <emscripten.h>
 
+static int soft_exit_code;
+
 void wasm_init_fs(void)
 {
-  // Fetch from IDBFS in the background
+  // Fetch from IDBFS in the background.  This should only be called once!
   EM_ASM(
+    Module.save_counter = 0;
     Module.restore_busy = 1;
     FS.mkdir("/dwasm");
     FS.mount(IDBFS, {}, "/dwasm");
@@ -69,8 +72,11 @@ void wasm_sync_fs(void)
 {
   // Sync to IDBFS in the background
   EM_ASM(
+    Module.save_counter++;
     console.info("Saving data...");
     FS.syncfs(function(err) {
+      Module.save_counter--;
+
       if (err)
         console.warn("Failed to save data:", err);
       else
@@ -113,4 +119,24 @@ void wasm_capture_mouse(void)
     if (typeof Module.captureMouse === 'function')
       Module.captureMouse();
   );
+}
+
+void wasm_soft_exit(int exit_code)
+{
+  soft_exit_code = exit_code;
+  emscripten_set_main_loop(wasm_soft_exit_fs_check, 0, 0);
+}
+
+void wasm_soft_exit_fs_check(void)
+{
+  // Called repeatedly on program exit until everything is saved
+  if (!EM_ASM_INT(
+    return Module.save_counter;
+  )) {
+    emscripten_cancel_main_loop();
+    EM_ASM({
+      if (typeof Module.softExit === 'function')
+        Module.softExit($0);
+    }, soft_exit_code);
+  }
 }

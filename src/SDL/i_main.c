@@ -459,6 +459,7 @@ void I_SafeExit(int rc)
 
 #ifdef __EMSCRIPTEN__
   emscripten_cancel_main_loop();
+  wasm_soft_exit(rc);
 #endif // __EMSCRIPTEN__
 
   exit(rc);
