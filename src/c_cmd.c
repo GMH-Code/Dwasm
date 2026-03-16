@@ -1231,12 +1231,12 @@ static void C_automapfindkey(char* cmd)
 
 static void C_timewarptimelinesave(char* cmd)
 {
-    doom_printf("%s",G_TimeWarpSaveTimelineAsFile(G_TimeWarpGenerateFilename()) ? "Timeline saved" : "Timeline failed to save");
+    doom_printf("%s",G_TimeWarpSaveTimelineAsFile(G_TimeWarpGenerateFilename(true)) ? "Timeline saved" : "Timeline failed to save");
 }
 
 static void C_timewarptimelineload(char* cmd)
 {
-    doom_printf("%s",G_TimeWarpLoadTimelineAsFile(G_TimeWarpGenerateFilename(), true) ? "Timeline loaded" : "Timeline failed to load");
+    doom_printf("%s",G_TimeWarpLoadTimelineAsFile(G_TimeWarpGenerateFilename(false), true) ? "Timeline loaded" : "Timeline failed to load");
 }
 
 static void C_savegame(char* cmd)

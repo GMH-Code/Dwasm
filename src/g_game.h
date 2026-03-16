@@ -94,7 +94,7 @@ void G_TimeWarpForward();
 void G_TimeWarpBackward();
 dboolean G_TimeWarpSaveTimelineAsFile(const char* filename);
 dboolean G_TimeWarpLoadTimelineAsFile(const char* filename, dboolean jump_to_tail);
-const char* G_TimeWarpGenerateFilename();
+const char* G_TimeWarpGenerateFilename(dboolean create_folder);
 void G_AutoSaveTimeWarpTimelineOnExit();
 
 //e6y

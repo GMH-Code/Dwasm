@@ -2444,7 +2444,7 @@ static void D_DoomMainSetup(void)
    */
   if (!netgame && !demorecording && !demoplayback) {
       if (autoload_timeline)
-          G_TimeWarpLoadTimelineAsFile(G_TimeWarpGenerateFilename(), false);
+          G_TimeWarpLoadTimelineAsFile(G_TimeWarpGenerateFilename(false), false);
       I_AtExit(G_AutoSaveTimeWarpTimelineOnExit, false);
   }
 }
