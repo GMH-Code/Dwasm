@@ -22,6 +22,7 @@ Also available are the following engines, which run very well in modern web brow
 
 - [Qwasm](https://gmh-code.github.io/qwasm/) ([source](https://github.com/GMH-Code/Qwasm) based on id's original *Quake* engine code)
 - [Qwasm2](https://gmh-code.github.io/qwasm2/) ([source](https://github.com/GMH-Code/Qwasm2) based on *Yamagi Quake II*)
+- [Wwasm](https://gmh-code.github.io/wwasm/) ([source](https://github.com/GMH-Code/wwasm) based on *iortcw*)
 
 IWAD Files
 ----------
@@ -189,6 +190,7 @@ This file is mandatory, but is usually generated as a one-off and is done when b
     mkdir build_native
     cd build_native
     cmake .. -DCMAKE_BUILD_TYPE=Release
+    make
 
 The compatible file should be in the `build_native` folder and match this exactly:
 
@@ -235,6 +237,12 @@ The process will output the following into the `build` folder:
 These files can then be placed on a web server.  To reduce bandwidth and download time, compress all the files using GZip (or better, Brotli) compression, host the files statically, and verify the web browser is doing the decompression for each file.
 
 A GZ-compressed build should be as little as (approximately) 1 megabyte, not including resources you add.
+
+### Standalone / Single-File Version
+
+This project has the capability of building everything into one portable standalone HTML file that does not require a web server to run.  To do this, add `-DSINGLE_HTML_FILE=1` to the `emcmake` line.
+
+This increases the build size, and the resultant `index.html` file will normally contain just one line of code.
 
 -----
 

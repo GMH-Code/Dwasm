@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.0...4.0)
 
 project("Dwasm"
-    VERSION 2.1.1
+    VERSION 2.2.0
     HOMEPAGE_URL "https://github.com/GMH-Code/Dwasm")
 
 # Set a default build type if none was specified
@@ -264,9 +264,23 @@ else()
             -sTOTAL_STACK=2MB \
             -sALLOW_MEMORY_GROWTH \
             -lidbfs.js \
-            --shell-file ../../wasm/shell.html \
-            --preload-file=../../wasm/fs/@/"
+            --shell-file ../../wasm/shell.html"
         )
+
+        # Embed everything into one HTML file if required
+        if(SINGLE_HTML_FILE)
+            set(CMAKE_EXE_LINKER_FLAGS
+                "${CMAKE_EXE_LINKER_FLAGS} \
+                -sSINGLE_FILE=1 \
+                --embed-file=../../wasm/fs/@/"
+            )
+        else()
+            set(CMAKE_EXE_LINKER_FLAGS
+                "${CMAKE_EXE_LINKER_FLAGS} \
+                --preload-file=../../wasm/fs/@/"
+            )
+        endif()
+
         set(CMAKE_EXECUTABLE_SUFFIX ".html")
         set(CMAKE_CROSSCOMPILING "")
     else()
