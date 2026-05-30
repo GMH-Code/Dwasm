@@ -1568,14 +1568,22 @@ static dboolean G_CheckSpot(int playernum, mapthing_t *mthing)
 void G_DeathMatchSpawnPlayer (int playernum)
 {
   int j, selections = deathmatch_p - deathmatchstarts;
+  int start;
 
   if (selections < MAXPLAYERS)
     I_Error("G_DeathMatchSpawnPlayer: Only %i deathmatch spots, %d required",
     selections, MAXPLAYERS);
 
+#ifdef __EMSCRIPTEN__
+  if (netgame)
+    start = (playernum + gametic) % selections;
+  else
+#endif
+    start = P_Random(pr_dmspawn) % selections;
+
   for (j=0 ; j<20 ; j++)
     {
-      int i = P_Random(pr_dmspawn) % selections;
+      int i = (start + j) % selections;
       if (G_CheckSpot (playernum, &deathmatchstarts[i]) )
         {
           deathmatchstarts[i].type = playernum+1;
@@ -2822,6 +2830,11 @@ static int G_GetHelpers(void)
 
 void G_ReloadDefaults(void)
 {
+  dboolean saved_playeringame[MAXPLAYERS];
+  int saved_consoleplayer = consoleplayer;
+
+  memcpy(saved_playeringame, playeringame, sizeof(saved_playeringame));
+
   // killough 3/1/98: Initialize options based on config file
   // (allows functions above to load different values for demos
   // and savegames without messing up defaults).
@@ -2870,9 +2883,16 @@ void G_ReloadDefaults(void)
   netdemo = false;
 
   // killough 2/21/98:
-  memset(playeringame+1, 0, sizeof(*playeringame)*(MAXPLAYERS-1));
-
-  consoleplayer = 0;
+  if (netgame)
+  {
+    memcpy(playeringame, saved_playeringame, sizeof(saved_playeringame));
+    consoleplayer = saved_consoleplayer;
+  }
+  else
+  {
+    memset(playeringame+1, 0, sizeof(*playeringame)*(MAXPLAYERS-1));
+    consoleplayer = 0;
+  }
 
   compatibility_level = G_GetWADCompatibilityLevel();
 

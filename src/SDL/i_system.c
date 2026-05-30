@@ -78,6 +78,9 @@
 #include "lprintf.h"
 #include "doomtype.h"
 #include "doomdef.h"
+#ifdef __EMSCRIPTEN__
+#include <emscripten.h>
+#endif
 #ifndef PRBOOM_SERVER
 #include "d_player.h"
 #include "m_fixed.h"
@@ -101,9 +104,11 @@
 
 void I_uSleep(unsigned long usecs)
 {
-#ifndef __EMSCRIPTEN__
+#ifdef __EMSCRIPTEN__
+    emscripten_sleep((unsigned int)(usecs / 1000));
+#else
     SDL_Delay(usecs/1000);
-#endif // !__EMSCRIPTEN__
+#endif
 }
 
 #ifndef PRBOOM_SERVER

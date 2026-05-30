@@ -181,7 +181,7 @@
           // Add code to handle exits, e.g. reload the page depending on status
           console.info('Program exited with code', status);
         },
-        arguments: window.location.search.length > 1 ? window.location.search.substr(1).split('&') : []
+        arguments: window.location.search.length > 1 ? window.location.search.substr(1).split('&').map(decodeURIComponent) : []
       };
       Module.setStatus('Downloading...');
       window.onerror = () => {

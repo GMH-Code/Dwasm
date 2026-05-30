@@ -26,6 +26,7 @@
 #cmakedefine HAVE_LIBSDL2_IMAGE
 #cmakedefine HAVE_LIBSDL2_MIXER
 #cmakedefine HAVE_NET
+#cmakedefine HAVE_WEBSOCKET_NET
 #cmakedefine USE_SDL_NET
 
 #cmakedefine HAVE_LIBPCREPOSIX

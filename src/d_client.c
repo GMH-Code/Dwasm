@@ -116,8 +116,9 @@ void D_InitNetGame (void)
   struct { packet_header_t head; short pn; } PACKEDATTR initpacket;
 
     I_InitNetwork();
-  udp_socket = I_Socket(0);
-  I_ConnectToServer(myargv[i]);
+    udp_socket = I_Socket(0);
+    if (I_ConnectToServer(myargv[i]) < 0)
+      I_Error("Failed to connect to server: %s", myargv[i]);
 
     do
     {
@@ -158,6 +159,7 @@ void D_InitNetGame (void)
       }
     }
     Z_Free(packet);
+
   }
   localcmds = netcmds[displayplayer = consoleplayer];
   for (i=0; i<numplayers; i++)
@@ -480,7 +482,10 @@ void TryRunTics (void)
 #endif
     runtics = (server ? remotetic : maketic) - gametic;
     if (!runtics) {
-      if (!movement_smooth || !window_focused) {
+      // Browser multiplayer should keep pumping the network loop even when the
+      // window loses focus, otherwise an unfocused client can fall behind and
+      // quit mid-match after the user switches to another browser.
+      if (!movement_smooth || (!window_focused && !netgame)) {
 #ifdef HAVE_NET
         if (server)
           I_WaitForPacket(ms_to_next_tick);
