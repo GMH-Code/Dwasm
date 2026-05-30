@@ -202,12 +202,21 @@ set(MUS2MID_SRC
 set(SDLDOOM_SOURCES
     SDL/i_joy.c
     SDL/i_main.c
-    SDL/i_network.c
     SDL/i_sound.c
     SDL/i_sshot.c
     SDL/i_system.c
     SDL/i_video.c
 )
+
+if(EMSCRIPTEN)
+    set(NET_TRANSPORT_SOURCE
+        WASM/wasm_network.c
+    )
+else()
+    set(NET_TRANSPORT_SOURCE
+        SDL/i_network.c
+    )
+endif()
 
 set(PCSOUND_SOURCES
     PCSOUND/pcsound.c
@@ -266,6 +275,7 @@ set(PRBOOM_PLUS_SOURCES
     ${WAD_SRC}
     ${MUS2MID_SRC}
     ${SDLDOOM_SOURCES}
+    ${NET_TRANSPORT_SOURCE}
     ${PCSOUND_SOURCES}
     ${TEXTSCREEN_SOURCES}
     ${DOOMMUSIC_SOURCES}

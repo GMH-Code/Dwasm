@@ -38,6 +38,237 @@
 
 #include <emscripten.h>
 
+enum
+{
+  WASM_NET_DISCONNECTED = 0,
+  WASM_NET_CONNECTING = 1,
+  WASM_NET_OPEN = 2,
+  WASM_NET_FAILED = 3
+};
+
+EM_JS(int, wasm_net_js_connect, (const char *endpoint), {
+  const MAX_QUEUED_BYTES = 1024 * 1024;
+  const MAX_PACKET_BYTES = 64 * 1024;
+  if (!Module.dwasmNet) {
+    Module.dwasmNet = {
+      socket: null,
+      queue: [],
+      queuedBytes: 0,
+      state: 0
+    };
+  }
+
+  const net = Module.dwasmNet;
+  if (typeof net.queuedBytes !== 'number') {
+    net.queuedBytes = 0;
+  }
+  const failSocket = (socket, reason, detail) => {
+    if (net.socket !== socket) {
+      return;
+    }
+
+    const messageDetail = (detail === undefined || detail === null) ? "" : detail;
+    console.warn(reason, messageDetail);
+    net.socket = null;
+    net.state = 3;
+    if (socket.readyState < WebSocket.CLOSING) {
+      socket.close();
+    }
+  };
+  const enqueuePacket = (socket, packet) => {
+    if (net.socket !== socket) {
+      return;
+    }
+
+    if (packet.length > MAX_PACKET_BYTES) {
+      failSocket(socket, 'Multiplayer relay packet exceeded limit:', packet.length);
+      return;
+    }
+
+    // Packet counts climb quickly when a browser window is unfocused. Keep a
+    // byte cap so memory stays bounded, but do not tear the socket down just
+    // because many small packets arrived while the client was throttled.
+    if (net.queuedBytes + packet.length > MAX_QUEUED_BYTES) {
+      failSocket(socket, 'Multiplayer relay receive queue exceeded limit:', net.queuedBytes + packet.length);
+      return;
+    }
+
+    net.queue.push(packet);
+    net.queuedBytes += packet.length;
+  };
+  const address = UTF8ToString(endpoint);
+  const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+  let url = address;
+
+  if (new RegExp('^[a-zA-Z][a-zA-Z0-9+.-]*://').test(url)) {
+  } else if (url.startsWith('//')) {
+    url = protocol + url;
+  } else {
+    url = protocol + '//' + url;
+  }
+
+  if (net.socket) {
+    const staleSocket = net.socket;
+    net.socket = null;
+    staleSocket.close();
+  }
+
+  net.queue = [];
+  net.queuedBytes = 0;
+  net.state = 1;
+
+  try {
+    const socket = new WebSocket(url);
+    net.socket = socket;
+    socket.binaryType = 'arraybuffer';
+    socket.onopen = () => {
+      if (net.socket !== socket) {
+        return;
+      }
+
+      net.state = 2;
+      console.info('Connected multiplayer relay:', url);
+    };
+    socket.onmessage = (event) => {
+      if (net.socket !== socket) {
+        return;
+      }
+
+      if (event.data instanceof ArrayBuffer) {
+        enqueuePacket(socket, new Uint8Array(event.data));
+      } else if (ArrayBuffer.isView(event.data)) {
+        enqueuePacket(socket, new Uint8Array(event.data.buffer.slice(event.data.byteOffset, event.data.byteOffset + event.data.byteLength)));
+      } else if (event.data && typeof event.data.arrayBuffer === 'function') {
+        event.data.arrayBuffer().then((buffer) => {
+          if (net.socket !== socket) {
+            return;
+          }
+
+          enqueuePacket(socket, new Uint8Array(buffer));
+        });
+      } else {
+        console.warn('Ignoring non-binary multiplayer frame.');
+      }
+    };
+    socket.onerror = () => {
+      if (net.socket !== socket) {
+        return;
+      }
+
+      if (net.state !== 2) {
+        net.state = 3;
+      }
+      console.warn('Multiplayer relay socket error.');
+    };
+    socket.onclose = () => {
+      if (net.socket !== socket) {
+        return;
+      }
+
+      net.socket = null;
+      net.state = 3;
+      console.info('Multiplayer relay disconnected.');
+    };
+  } catch (error) {
+    net.socket = null;
+    net.queue = [];
+    net.state = 3;
+    console.warn('Failed to create multiplayer relay socket:', error);
+    return -1;
+  }
+
+  return 0;
+});
+
+EM_JS(int, wasm_net_js_state, (), {
+  return Module.dwasmNet ? Module.dwasmNet.state : 0;
+});
+
+EM_JS(int, wasm_net_js_send, (const void *data, int len), {
+  const MAX_BUFFERED_BYTES = 1024 * 1024;
+  const net = Module.dwasmNet;
+  if (!net || !net.socket || net.state !== 2) {
+    return -1;
+  }
+
+  if (net.socket.readyState !== WebSocket.OPEN) {
+    const socket = net.socket;
+    net.socket = null;
+    net.state = 3;
+    if (socket && socket.readyState < WebSocket.CLOSING) {
+      socket.close();
+    }
+    return -1;
+  }
+
+  if (net.socket.bufferedAmount > MAX_BUFFERED_BYTES) {
+    const socket = net.socket;
+    console.warn('Multiplayer relay send backlog exceeded limit:', net.socket.bufferedAmount);
+    net.socket = null;
+    net.state = 3;
+    socket.close();
+    return -1;
+  }
+
+  try {
+    net.socket.send(HEAPU8.slice(data, data + len));
+    return len;
+  } catch (error) {
+    const socket = net.socket;
+    console.warn('Multiplayer relay send failed:', error);
+    if (socket && socket.readyState === WebSocket.OPEN) {
+      net.state = 3;
+      net.socket = null;
+      socket.close();
+    } else {
+      net.socket = null;
+      net.state = 0;
+    }
+    return -1;
+  }
+});
+
+EM_JS(int, wasm_net_js_packet_len, (), {
+  const net = Module.dwasmNet;
+  if (!net || !net.queue.length) {
+    return 0;
+  }
+
+  return net.queue[0].length;
+});
+
+EM_JS(int, wasm_net_js_receive, (void *buffer, int buflen), {
+  const net = Module.dwasmNet;
+  if (!net || !net.queue.length) {
+    return 0;
+  }
+
+  const packet = net.queue.shift();
+  net.queuedBytes -= packet.length;
+  const len = Math.min(packet.length, buflen);
+  HEAPU8.set(packet.subarray(0, len), buffer);
+  return len;
+});
+
+EM_JS(void, wasm_net_js_close, (), {
+  const net = Module.dwasmNet;
+  if (!net || !net.socket) {
+    if (net) {
+      net.queue = [];
+      net.queuedBytes = 0;
+      net.state = 0;
+    }
+    return;
+  }
+
+  const socket = net.socket;
+  net.socket = null;
+  net.queue = [];
+  net.queuedBytes = 0;
+  net.state = 0;
+  socket.close();
+});
+
 static int soft_exit_code;
 
 void wasm_init_fs(void)
@@ -119,6 +350,41 @@ void wasm_capture_mouse(void)
     if (typeof Module.captureMouse === 'function')
       Module.captureMouse();
   );
+}
+
+void wasm_sleep(unsigned int ms)
+{
+  emscripten_sleep((int)ms);
+}
+
+int wasm_net_connect(const char *endpoint)
+{
+  return wasm_net_js_connect(endpoint);
+}
+
+int wasm_net_state(void)
+{
+  return wasm_net_js_state();
+}
+
+int wasm_net_send(const void *data, int len)
+{
+  return wasm_net_js_send(data, len);
+}
+
+int wasm_net_packet_len(void)
+{
+  return wasm_net_js_packet_len();
+}
+
+int wasm_net_receive(void *buffer, int buflen)
+{
+  return wasm_net_js_receive(buffer, buflen);
+}
+
+void wasm_net_close(void)
+{
+  wasm_net_js_close();
 }
 
 void wasm_soft_exit(int exit_code)

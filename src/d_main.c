@@ -647,6 +647,8 @@ static void D_DoomLoop(void)
 #ifdef __EMSCRIPTEN__
   wasm_hide_console();
   emscripten_set_main_loop(D_LoopLoopIter, 0, 0);
+  if (netgame)
+    emscripten_set_main_loop_timing(EM_TIMING_SETTIMEOUT, 0);
 #else
   for (;;)
     {

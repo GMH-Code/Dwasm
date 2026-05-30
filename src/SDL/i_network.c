@@ -182,7 +182,7 @@ void I_Disconnect(void)
  * Sets the given socket non-blocking, binds to the given port, or first
  * available if none is given
  */
-UDP_SOCKET I_Socket(Uint16 port)
+UDP_SOCKET I_Socket(unsigned short port)
 {
   if(port)
     return (SDLNet_UDP_Open(port));

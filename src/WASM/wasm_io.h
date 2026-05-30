@@ -44,6 +44,13 @@ void wasm_hide_console(void);
 void wasm_show_console(void);
 void wasm_vid_resize(void);
 void wasm_capture_mouse(void);
+void wasm_sleep(unsigned int ms);
+int wasm_net_connect(const char *endpoint);
+int wasm_net_state(void);
+int wasm_net_send(const void *data, int len);
+int wasm_net_packet_len(void);
+int wasm_net_receive(void *buffer, int buflen);
+void wasm_net_close(void);
 void wasm_soft_exit(int exit_code);
 void wasm_soft_exit_fs_check(void);
 

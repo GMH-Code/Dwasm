@@ -98,6 +98,8 @@ endif()
 if(EMSCRIPTEN)
     set(SDL2_MIXER_FOUND TRUE)
     set(HAVE_LIBSDL2_MIXER TRUE)
+    set(HAVE_NET TRUE)
+    set(HAVE_WEBSOCKET_NET TRUE)
 else()
     find_package(SDL2 2.0.7 REQUIRED)
 
@@ -258,6 +260,7 @@ else()
         set(CMAKE_EXE_LINKER_FLAGS
             "${CMAKE_EXE_LINKER_FLAGS} \
             ${SHARED_EMSCRIPTEN_FLAGS} \
+            -sASYNCIFY \
             -sEMULATE_FUNCTION_POINTER_CASTS=1 \
             -sFULL_ES2=1 \
             -sINITIAL_MEMORY=64MB \

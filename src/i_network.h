@@ -34,7 +34,12 @@
 #include "config.h"
 #endif
 
-#ifdef USE_SDL_NET
+#ifdef HAVE_WEBSOCKET_NET
+ #define UDP_SOCKET int
+ #define UDP_PACKET int
+ #define UDP_CHANNEL int
+ extern UDP_SOCKET udp_socket;
+#elif defined(USE_SDL_NET)
  #include "SDL_net.h"
  #define UDP_SOCKET UDPsocket
  #define UDP_PACKET UDPpacket
@@ -54,9 +59,12 @@ size_t I_GetPacket(packet_header_t* buffer, size_t buflen);
 void I_SendPacket(packet_header_t* packet, size_t len);
 void I_WaitForPacket(int ms);
 
-#ifdef USE_SDL_NET
-UDP_SOCKET I_Socket(Uint16 port);
+#if defined(USE_SDL_NET) || defined(HAVE_WEBSOCKET_NET)
+UDP_SOCKET I_Socket(unsigned short port);
 int I_ConnectToServer(const char *serv);
+#endif
+
+#ifdef USE_SDL_NET
 UDP_CHANNEL I_RegisterPlayer(IPaddress *ipaddr);
 void I_UnRegisterPlayer(UDP_CHANNEL channel);
 extern IPaddress sentfrom_addr;

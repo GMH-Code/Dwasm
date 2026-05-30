@@ -131,9 +131,26 @@ Note that the choice of features you can bind (link) buttons to is currently lim
 Networking Support
 ------------------
 
-WebSockets support for multiplayer has not yet been added.
+Browser multiplayer now uses a WebSocket relay transport.
 
-It should be possible to connect to a WebSockets proxy to enable online play, but Dwasm will need rebuilding with the appropriate proxy configuration.
+The game client still speaks the existing PrBoom packet protocol from `protocol.h`. The only transport change is that browser builds send and receive those packet bytes inside binary WebSocket frames instead of UDP datagrams.
+
+The relay is expected to sit between the browser and the normal Doom server path:
+
+- Browser client: binary WebSocket frames carrying raw Doom packet bytes.
+- Relay/proxy: unwraps each frame and forwards the payload to the existing UDP server, and wraps UDP replies back into binary WebSocket frames.
+- Native client/server: unchanged and still use the existing SDL_net UDP path.
+
+To join a relay-backed server from the browser, pass the usual `-net` argument with a WebSocket URL or host:port pair. Examples:
+
+    https://127.0.0.1/?-net&wss%3A%2F%2Frelay.example%2Fdoom
+    http://127.0.0.1/?-net&ws://127.0.0.1:8000/doom
+
+When the page is served over `https://`, the relay must also be reachable over `wss://` or the browser will block the connection as mixed content. Use `ws://` only from an `http://` page, localhost-style development setup, or another browser context that explicitly permits it.
+
+If you use a bare `host:port`, Dwasm will automatically choose `ws://` or `wss://` to match the page, so an `https://` page will prefer a secure relay automatically.
+
+Browser multiplayer keeps the network loop active even while the window is unfocused. This avoids browser clients falling behind and dropping from a live match just because the player switched to another window or browser during play.
 
 Cheat Codes
 -----------
@@ -220,6 +237,8 @@ Many soundfont compilations on the Internet can sound great sometimes, but terri
 
 To build the main project, place `prboomx.wad` and other files (such as an IWAD) that you would like to include into the `wasm/fs` folder.  All filenames must be in **lowercase**.
 
+WebAssembly builds now enable the Doom client netcode by default and use Asyncify so the existing packet wait loops can yield safely while waiting for WebSocket traffic.
+
 Next, run these commands in the Dwasm folder.  Replace `/tmp/gl4es` with your GL4ES build, if applicable.  If you decided not to include WebGL support, *completely* remove the option `-DGL4ES_PATH=/tmp/gl4es`.
 
     mkdir build
@@ -235,6 +254,8 @@ The process will output the following into the `build` folder:
     index.wasm
 
 These files can then be placed on a web server.  To reduce bandwidth and download time, compress all the files using GZip (or better, Brotli) compression, host the files statically, and verify the web browser is doing the decompression for each file.
+
+For multiplayer, deploy a relay endpoint that accepts binary WebSocket frames and forwards the raw payload bytes to the existing Doom UDP server. The browser client does not speak JSON and does not change the packet layout.
 
 A GZ-compressed build should be as little as (approximately) 1 megabyte, not including resources you add.
 
