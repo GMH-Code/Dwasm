@@ -1039,17 +1039,13 @@ dboolean G_Responder (event_t* ev)
       // killough 10/98:
       // Don't pop up menu, if paused in middle
       // of demo playback, or if automap active.
-      // Don't suck up keys, which may be cheats
 
-//e6y
-  /*
-      return gamestate == GS_DEMOSCREEN &&
-  !(paused & 2) && !(automapmode & am_active) &&
+      return !(paused & 2) && !(automapmode & am_active) &&
   ((ev->type == ev_keydown) ||
    (ev->type == ev_mouse && ev->data1) ||
    (ev->type == ev_joystick && ev->data1)) ?
   M_StartControlPanel(), true : false;
-    */
+
     }
 
   if (gamestate == GS_FINALE && F_Responder(ev))
