@@ -2991,11 +2991,11 @@ setup_menu_t auto_settings1[] =  // 1st AutoMap Settings screen
   {"Scroll / Zoom speed  (1..32)",            S_NUM,  m_null,AU_X,AU_Y+5*8, {"map_scroll_speed"}},
   {"Use mouse wheel for zooming",             S_YESNO,m_null,AU_X,AU_Y+6*8, {"map_wheel_zoom"}},
   {"Apply multisampling",                     S_YESNO,m_null,AU_X,AU_Y+7*8, {"map_use_multisamling"}, 0, 0, M_ChangeMapMultisamling},
+  {"Player arrow appearance",                 S_CHOICE,m_null,AU_X,AU_Y+8*8, {"map_player_arrow_appearance"}, 0, 0, NULL, map_player_arrow_appearance_list},
+  {"Enhanced allmap power up",                S_YESNO,m_null,AU_X,AU_Y+9*8, {"map_enhanced_allmap"}},
 #ifdef GL_DOOM
-  {"Enable textured display",                 S_YESNO,m_null,AU_X,AU_Y+8*8, {"map_textured"}, 0, 0, M_ChangeMapTextured},
-  {"Things appearance",                       S_CHOICE,m_null,AU_X,AU_Y+9*8, {"map_things_appearance"}, 0, 0, NULL, map_things_appearance_list},
-  {"Player arrow appearance",                 S_CHOICE,m_null,AU_X,AU_Y+10*8, {"map_player_arrow_appearance"}, 0, 0, NULL, map_player_arrow_appearance_list},
-  {"Enhanced allmap power up",                S_YESNO,m_null,AU_X,AU_Y+11*8, {"map_enhanced_allmap"}},
+  {"Enable textured display",                 S_YESNO,m_null,AU_X,AU_Y+10*8, {"map_textured"}, 0, 0, M_ChangeMapTextured},
+  {"Things appearance",                       S_CHOICE,m_null,AU_X,AU_Y+11*8, {"map_things_appearance"}, 0, 0, NULL, map_things_appearance_list},
   {"Translucency percentage",                 S_SKIP|S_TITLE,m_null,AU_X,AU_Y+12*8},
   {"Textured automap",                        S_NUM,  m_null,AU_X,AU_Y+13*8, {"map_textured_trans"}},
   {"Textured automap in overlay mode",        S_NUM,  m_null,AU_X,AU_Y+14*8, {"map_textured_overlay_trans"}},
@@ -3359,14 +3359,12 @@ setup_menu_t gen_settings_prboomx[] = { // prboomX General Settings
 
   {"PrBoomX Settings"                 ,S_SKIP|S_TITLE,m_null, G_X, G_Y+ 1*8},
   {"Organize Save files by loaded WAD",S_YESNO       ,m_null, G_X, G_Y+2*8, {"organize_saves"}, 0, 0, D_AdjustSaveLocation},
-  {"Enhanced allmap power up"         ,S_YESNO       ,m_null,G_X,G_Y+3*8, {"map_enhanced_allmap"}},
-  {"Player map arrow appearance",     S_CHOICE       ,m_null,G_X,G_Y+4*8, {"map_player_arrow_appearance"}, 0, 0, NULL, map_player_arrow_appearance_list},
-  {"Skip QuickSave/Load confirmation" ,S_YESNO       ,m_null,G_X,G_Y+5*8, {"skip_quicksaveload_confirmation"}},
-  {"Skip Save confirmation message"   ,S_YESNO       ,m_null,G_X,G_Y+6*8, {"no_save_message"}},
-  {"Enable Time Warping"              ,S_YESNO       ,m_null,G_X,G_Y+7*8, {"enable_time_warping"}},
-  {"Autoload Time Warp Timelines"     ,S_YESNO       ,m_null,G_X,G_Y+8*8, {"autoload_timeline"}},
-  {"Autosave Timeline upon Quit"      ,S_YESNO       ,m_null,G_X,G_Y+9*8, {"autosave_timeline_on_exit"}},
-  {"Fix Blockmap bug"                 ,S_YESNO       ,m_null,G_X,G_Y+10*8, {"comp_fix_blockmap"}},
+  {"Skip QuickSave/Load confirmation" ,S_YESNO       ,m_null,G_X,G_Y+3*8, {"skip_quicksaveload_confirmation"}},
+  {"Skip Save confirmation message"   ,S_YESNO       ,m_null,G_X,G_Y+4*8, {"no_save_message"}},
+  {"Enable Time Warping"              ,S_YESNO       ,m_null,G_X,G_Y+5*8, {"enable_time_warping"}},
+  {"Autoload Time Warp Timelines"     ,S_YESNO       ,m_null,G_X,G_Y+6*8, {"autoload_timeline"}},
+  {"Autosave Timeline upon Quit"      ,S_YESNO       ,m_null,G_X,G_Y+7*8, {"autosave_timeline_on_exit"}},
+  {"Fix Blockmap bug"                 ,S_YESNO       ,m_null,G_X,G_Y+8*8, {"comp_fix_blockmap"}},
 
   {"<- PREV",S_SKIP|S_PREV, m_null,KB_PREV, KB_Y+20*8, {gen_settings1}},
   {"NEXT ->",S_SKIP|S_NEXT,m_null,KB_NEXT,KB_Y+20*8, {gen_settings2}},
@@ -3422,9 +3420,8 @@ setup_menu_t gen_settings2[] = { // General Settings screen2
   {"Default compatibility level",      S_CHOICE,        m_null, G_X, G_Y+15*8, {"default_compatibility_level"}, 0, 0, NULL, &gen_compstrings[1]},
   {"Show ENDOOM screen",               S_YESNO,         m_null, G_X, G_Y+16*8, {"showendoom"}},
   {"Fullscreen menu background",       S_YESNO, m_null, G_X, G_Y + 17*8, {"menu_background"}},
-  {"Organize Save files by loaded WAD",S_YESNO       ,m_null, G_X, G_Y+18*8  , {"organize_saves"}, 0, 0, D_AdjustSaveLocation},
 #ifdef USE_WINDOWS_LAUNCHER
-  {"Use In-Game Launcher",             S_CHOICE,        m_null, G_X, G_Y+ 20*8, {"launcher_enable"}, 0, 0, NULL, launcher_enable_states},
+  {"Use In-Game Launcher",             S_CHOICE,        m_null, G_X, G_Y+ 19*8, {"launcher_enable"}, 0, 0, NULL, launcher_enable_states},
 #endif
 
 
@@ -5178,7 +5175,7 @@ dboolean M_Responder (event_t* ev) {
 
   if (!menuactive)
     {
-    if (ch == key_escape)                                     // phares
+    if (ch == key_escape || (!chat_on && ch == key_backspace))  // phares
       {
       M_StartControlPanel ();
       S_StartSound(NULL,sfx_swtchn);
@@ -6009,6 +6006,11 @@ dboolean M_Responder (event_t* ev) {
     itemOn = currentMenu->lastOn;
     S_StartSound(NULL,sfx_swtchn);
   }
+  else
+    {
+      M_ClearMenus();
+      S_StartSound(NULL,sfx_swtchx);
+    }
       return true;
     }
 
