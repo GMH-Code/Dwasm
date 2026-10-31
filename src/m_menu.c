@@ -5178,7 +5178,7 @@ dboolean M_Responder (event_t* ev) {
 
   if (!menuactive)
     {
-    if (ch == key_escape)                                     // phares
+    if (ch == key_escape || (!chat_on && ch == key_backspace))  // phares
       {
       M_StartControlPanel ();
       S_StartSound(NULL,sfx_swtchn);
@@ -6009,6 +6009,11 @@ dboolean M_Responder (event_t* ev) {
     itemOn = currentMenu->lastOn;
     S_StartSound(NULL,sfx_swtchn);
   }
+  else
+    {
+      M_ClearMenus();
+      S_StartSound(NULL,sfx_swtchx);
+    }
       return true;
     }
 
